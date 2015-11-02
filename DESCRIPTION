@@ -9,3 +9,4 @@ Description: Implements non-parametric methods for anticipating the emergence
 Depends: R (>= 3.2.1)
 License: MIT + file LICENSE
 LazyData: true
+Imports: np (>= 0.60.2)
