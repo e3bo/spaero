@@ -10,3 +10,5 @@ Depends: R (>= 3.2.1)
 License: MIT + file LICENSE
 LazyData: true
 Imports: np (>= 0.60.2)
+Suggests: lintr (>= 0.3.3),
+    testthat (>= 0.11.0)
