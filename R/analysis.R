@@ -24,7 +24,7 @@
 detrend <- function(x, type=c("grand.mean", "ensemble.means",
                         "local.constant.gaussian.weights",
                         "local.linear.gaussian.weights"),
-                    bandwidth=NULL){
+                    bandwidth=NULL, nmulti=5){
   type <- match.arg(type)
   x <- na.fail(x)
   x <- as.matrix(x)
@@ -40,13 +40,13 @@ detrend <- function(x, type=c("grand.mean", "ensemble.means",
     samplet <- as.integer(nrow(x))
     step <- seq(1, samplet)
     data <- data.frame(step=step, rmn=rmn)
-    srm <- smooth(data, type, bandwidth)
+    srm <- smooth(data, type, bandwidth, nmulti)
     x <- x - srm
   }
   x
 }
 
-smooth <- function(data, type, bandwidth){
+smooth <- function(data, type, bandwidth, nmulti=5){
   is.constant <- grepl("constant", type)
   rt <- ifelse(is.constant, "lc", "ll")
   if (!is.null(bandwidth)){
@@ -57,7 +57,7 @@ smooth <- function(data, type, bandwidth){
   } else {
     bw <- np::npregbw(formula=rmn ~ step, regtype=rt, ckertype="gaussian",
                       bkerorder=2, bwmethod="cv.ls", bwtype="fixed",
-                      data=data, na.action=na.fail)
+                      data=data, na.action=na.fail, nmulti=nmulti)
   }
   mod <- np::npreg(bw)
   fitted(mod)
