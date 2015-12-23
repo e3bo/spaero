@@ -9,8 +9,6 @@
 #' @param type Character string giving the type of acf to be
 #'   returned. Allowed values are '"correlation"' (the default), and
 #'   '"covariance"'. Will be partially matched.
-#' @param na.action Function to be called to handle missing
-#'   values. 'na.pass' can be used.
 #' @param type Character string giving method of calculating the trend
 #' to subtract. Allowed values are '"grand.mean"' (the default),
 #' '"ensemble.means"', '"local.mean.gaussian.weights"',
@@ -19,19 +17,20 @@
 #' @param bandwidth Bandwith for any kernel-based detrending
 #'   done. If not supplied, a bandwidth will be selected by
 #'   cross-validation of least squared error.
+#'
+#' @details Any missing values in 'x' will cause an error.
 #' @export
 #'
-detrend <- function(x, na.action=na.fail,
-                    type=c("grand.mean", "ensemble.means",
+detrend <- function(x, type=c("grand.mean", "ensemble.means",
                         "local.constant.gaussian.weights",
                         "local.linear.gaussian.weights"),
                     bandwidth=NULL){
   type <- match.arg(type)
-  x <- na.action(x)
+  x <- na.fail(x)
   x <- as.matrix(x)
   if (!is.numeric(x)) stop("'x' must be numeric")
 
-  rmn <- rowMeans(x, na.rm=TRUE)
+  rmn <- rowMeans(x)
   if (type == "grand.mean"){
     x <- x - mean(rmn)
   } else if (type == "ensemble.means"){
@@ -53,11 +52,12 @@ smooth <- function(data, type, bandwidth){
   if (!is.null(bandwidth)){
     bw <- np::npregbw(formula=rmn ~ step, bws=bandwidth,
                       regtype=rt, ckertype="gaussian", ckerorder=2,
-                      bandwidth.compute=FALSE, data=data)
+                      bandwidth.compute=FALSE, data=data,
+                      na.action=na.fail)
   } else {
     bw <- np::npregbw(formula=rmn ~ step, regtype=rt, ckertype="gaussian",
                       bkerorder=2, bwmethod="cv.ls", bwtype="fixed",
-                      data=data)
+                      data=data, na.action=na.fail)
   }
   mod <- np::npreg(bw)
   fitted(mod)
