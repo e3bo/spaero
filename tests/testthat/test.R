@@ -10,11 +10,11 @@ set.seed(123)
 context("detrending")
 
 test_that("Mean-based detrending works", {
-  expect_equal(detrend(1:10, trend="grand.mean"), matrix(1:10 - 5.5))
-  expect_equal(detrend(cbind(1:10, 2:11), trend="grand.mean"),
+  expect_equal(detrend(1:10, trend="grand.mean")$x, matrix(1:10 - 5.5))
+  expect_equal(detrend(cbind(1:10, 2:11), trend="grand.mean")$x,
                cbind(1:10, 2:11) - 6)
-  expect_equal(detrend(1:10, trend="ensemble"), matrix(rep(0, 10)))
-  expect_equal(detrend(cbind(1:10, 2:11), trend="ensemble"),
+  expect_equal(detrend(1:10, trend="ensemble")$x, matrix(rep(0, 10)))
+  expect_equal(detrend(cbind(1:10, 2:11), trend="ensemble")$x,
                cbind(1:10, 2:11) - 1:10 - 0.5)
   })
 
