@@ -21,58 +21,60 @@
 #' @details Any missing values in 'x' will cause an error.
 #' @export
 #'
-detrend <- function(x, type=c("grand.mean", "ensemble.means",
-                        "local.constant.gaussian.weights",
-                        "local.linear.gaussian.weights"),
+detrend <- function(x, trend=c("grand.mean", "ensemble.means",
+                           "local.constant", "local.linear"),
+                    kernel=c("gaussian", "uniform"),
                     bandwidth=NULL, nmulti=5){
-  type <- match.arg(type)
+  trend <- match.arg(trend)
+  kernel <- match.arg(kernel)
   x <- na.fail(x)
   x <- as.matrix(x)
   if (!is.numeric(x)) stop("'x' must be numeric")
 
   rmn <- rowMeans(x)
-  if (type == "grand.mean"){
+  if (trend == "grand.mean"){
     x <- x - mean(rmn)
-  } else if (type == "ensemble.means"){
+  } else if (trend == "ensemble.means"){
     x <- x - rmn
-  } else if (type == "local.constant.gaussian.weights"
-             || type == "local.linear.gaussian.weights"){
+  } else if (trend == "local.constant"
+             || trend == "local.linear"){
     samplet <- as.integer(nrow(x))
     step <- seq(1, samplet)
     data <- data.frame(step=step, rmn=rmn)
-    srm <- smooth(data, type, bandwidth, nmulti)
+    srm <- smooth(data=data, bandwidth=bandwidth, est=trend, kernel=kernel,
+                  nmulti=nmulti)
     x <- x - srm
   }
   x
 }
 
-smooth <- function(data, type, bandwidth, nmulti=5){
-  is.constant <- grepl("constant", type)
+smooth <- function(data, est, bandwidth, kernel="gaussian", nmulti=5){
+  is.constant <- grepl("constant", est)
   rt <- ifelse(is.constant, "lc", "ll")
   if (!is.null(bandwidth)){
     bw <- np::npregbw(formula=rmn ~ step, bws=bandwidth,
-                      regtype=rt, ckertype="gaussian", ckerorder=2,
+                      regtype=rt, ckertype=kernel,
                       bandwidth.compute=FALSE, data=data,
                       na.action=na.fail)
   } else {
-    bw <- np::npregbw(formula=rmn ~ step, regtype=rt, ckertype="gaussian",
-                      bkerorder=2, bwmethod="cv.ls", bwtype="fixed",
+    bw <- np::npregbw(formula=rmn ~ step, regtype=rt, ckertype=kernel,
+                      bwmethod="cv.ls", bwtype="fixed",
                       data=data, na.action=na.fail, nmulti=nmulti)
   }
   mod <- np::npreg(bw)
   fitted(mod)
 }
 
-autocor <- function(x, coretype=c('correlation', 'covariance'), lag=1,
-                    bandwidth=NULL,
-                    smoothtype=c("local.constant.gaussian.weights",
-                        "local.linear.gaussian.weights"), nmulti=5){
-  smoothtype <- match.arg(smoothtype)
+autocor <- function(x, coretype=c("correlation", "covariance"), lag=1,
+                    bandwidth=NULL, est=c("local.constant", "local.linear"),
+                    kernel=c("gaussian", "uniform"), nmulti=5){
+  est <- match.arg(est)
   coretype <- match.arg(coretype)
+  kernel <- match.arg(kernel)
   x <- na.fail(x)
   x <- as.matrix(x)
   if (!is.numeric(x)) stop("'x' must be numeric")
-  stopifnot(lag >= 0)
+  if (lag < 0) stop("'lag' must be >= 0")
 
   n <- nrow(x)
   end1 <- n - lag
@@ -83,6 +85,7 @@ autocor <- function(x, coretype=c('correlation', 'covariance'), lag=1,
 
   step <- seq(start2, n)
   data <- data.frame(step=step, rmn=xx)
-  sxx <- smooth(data, smoothtype, bandwidth, nmulti)
+  sxx <- smooth(data=data, bandwidth=bandwidth, kernel=kernel, est=est,
+                nmulti=nmulti)
   sxx
 }
