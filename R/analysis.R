@@ -21,6 +21,7 @@
 #' @details Any missing values in 'x' will cause an error.
 #' @export
 #'
+
 detrend <- function(x, trend=c("grand.mean", "ensemble.means",
                            "local.constant", "local.linear"),
                     kernel=c("gaussian", "uniform"),
@@ -43,7 +44,7 @@ detrend <- function(x, trend=c("grand.mean", "ensemble.means",
     data <- data.frame(step=step, rmn=rmn)
     srm <- smooth(data=data, bandwidth=bandwidth, est=trend, kernel=kernel,
                   nmulti=nmulti)
-    x <- x - srm
+    x <- x - srm$smooth
   }
   x
 }
@@ -62,14 +63,14 @@ smooth <- function(data, est, bandwidth, kernel="gaussian", nmulti=5){
                       data=data, na.action=na.fail, nmulti=nmulti)
   }
   mod <- np::npreg(bw)
-  fitted(mod)
+  list(smooth=fitted(mod), bandwidth=bw$bw)
 }
 
-autocor <- function(x, coretype=c("correlation", "covariance"), lag=1,
+autocor <- function(x, cortype=c("correlation", "covariance"), lag=1,
                     bandwidth=NULL, est=c("local.constant", "local.linear"),
                     kernel=c("gaussian", "uniform"), nmulti=5){
   est <- match.arg(est)
-  coretype <- match.arg(coretype)
+  cortype <- match.arg(cortype)
   kernel <- match.arg(kernel)
   x <- na.fail(x)
   x <- as.matrix(x)
@@ -81,11 +82,20 @@ autocor <- function(x, coretype=c("correlation", "covariance"), lag=1,
   start2 <- 1 + lag
   x1 <- x[1:end1, , drop=FALSE]
   x2 <- x[start2:n, , drop=FALSE]
-  xx <- rowMeans(x1 * x2)
+  xx_lag <- rowMeans(x1 * x2)
 
   step <- seq(start2, n)
-  data <- data.frame(step=step, rmn=xx)
-  sxx <- smooth(data=data, bandwidth=bandwidth, kernel=kernel, est=est,
-                nmulti=nmulti)
-  sxx
+  data <- data.frame(step=step, rmn=xx_lag)
+  smth_xx_lag <- smooth(data=data, bandwidth=bandwidth, kernel=kernel,
+                est=est, nmulti=nmulti)
+  if (cortype == "correlation") {
+    xx <- rowMeans(x1 * x1) * 0.5 + rowMeans(x2 * x2) * 0.5
+    data <- data.frame(step=step, rmn=xx)
+    smth_xx <- smooth(data=data, bandwidth=smth_xx_lag$bandwidth,
+                      kernel=kernel, est=est, nmulti=nmulti)
+    list(smooth=smth_xx_lag$smooth / smth_xx$smooth,
+         bandwidth=smth_xx$bandwidth)
+  } else {
+    smth_xx_lag
+  }
 }
