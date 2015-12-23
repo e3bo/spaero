@@ -62,3 +62,27 @@ smooth <- function(data, type, bandwidth, nmulti=5){
   mod <- np::npreg(bw)
   fitted(mod)
 }
+
+autocor <- function(x, coretype=c('correlation', 'covariance'), lag=1,
+                    bandwidth=NULL,
+                    smoothtype=c("local.constant.gaussian.weights",
+                        "local.linear.gaussian.weights"), nmulti=5){
+  smoothtype <- match.arg(smoothtype)
+  coretype <- match.arg(coretype)
+  x <- na.fail(x)
+  x <- as.matrix(x)
+  if (!is.numeric(x)) stop("'x' must be numeric")
+  stopifnot(lag >= 0)
+
+  n <- nrow(x)
+  end1 <- n - lag
+  start2 <- 1 + lag
+  x1 <- x[1:end1, , drop=FALSE]
+  x2 <- x[start2:n, , drop=FALSE]
+  xx <- rowMeans(x1 * x2)
+
+  step <- seq(start2, n)
+  data <- data.frame(step=step, rmn=xx)
+  sxx <- smooth(data, smoothtype, bandwidth, nmulti)
+  sxx
+}
