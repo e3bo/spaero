@@ -10,8 +10,8 @@ set.seed(123)
 context("detrending")
 
 test_that("Mean-based detrending works", {
-  expect_equal(detrend(1:10, trend="grand.mean")$x, matrix(1:10 - 5.5))
-  expect_equal(detrend(cbind(1:10, 2:11), trend="grand.mean")$x,
+  expect_equal(detrend(1:10, trend="grand_mean")$x, matrix(1:10 - 5.5))
+  expect_equal(detrend(cbind(1:10, 2:11), trend="grand_mean")$x,
                cbind(1:10, 2:11) - 6)
   expect_equal(detrend(1:10, trend="ensemble")$x, matrix(rep(0, 10)))
   expect_equal(detrend(cbind(1:10, 2:11), trend="ensemble")$x,
@@ -36,7 +36,7 @@ test_that("Smoothing function works as expected", {
       }
     }
     w <- sapply(data$step, kern)
-    if (est == "local.constant"){
+    if (est == "local_constant"){
       colSums(w * data$rmn)
     } else {
       wlm <- function(x){
@@ -47,26 +47,26 @@ test_that("Smoothing function works as expected", {
     }
   }
   data <- data.frame(step=1:10, rmn=1:10)
-  expect_equal(smooth(data, est="local.constant", bandwidth=2)$smooth,
-               simple_smooth(data, est="local.constant",  bandwidth=2))
-  expect_equal(smooth(data, est="local.linear", bandwidth=2)$smooth,
-               simple_smooth(data, est="local.linear",  bandwidth=2),
+  expect_equal(smooth(data, est="local_constant", bandwidth=2)$smooth,
+               simple_smooth(data, est="local_constant",  bandwidth=2))
+  expect_equal(smooth(data, est="local_linear", bandwidth=2)$smooth,
+               simple_smooth(data, est="local_linear",  bandwidth=2),
                check.names=FALSE)
 
-  expect_equal(smooth(data, est="local.constant", kernel="uniform",
+  expect_equal(smooth(data, est="local_constant", kernel="uniform",
                       bandwidth=3)$smooth,
-               simple_smooth(data, est="local.constant", kernel="uniform",
+               simple_smooth(data, est="local_constant", kernel="uniform",
                              bandwidth=3))
-  expect_equal(smooth(data, est="local.linear", bandwidth=3)$smooth,
-               simple_smooth(data, est="local.linear", bandwidth=3),
+  expect_equal(smooth(data, est="local_linear", bandwidth=3)$smooth,
+               simple_smooth(data, est="local_linear", bandwidth=3),
                check.names=FALSE)
 
   data2 <- data.frame(step=20:100, rmn=rnorm(81))
-  expect_equal(smooth(data2, est="local.constant", bandwidth=5)$smooth,
-               simple_smooth(data2, est="local.constant", bandwidth=5))
-  expect_equal(smooth(data2, est="local.linear", bandwidth=5,
+  expect_equal(smooth(data2, est="local_constant", bandwidth=5)$smooth,
+               simple_smooth(data2, est="local_constant", bandwidth=5))
+  expect_equal(smooth(data2, est="local_linear", bandwidth=5,
                       kernel="uniform")$smooth,
-               simple_smooth(data2, est="local.linear", bandwidth=5,
+               simple_smooth(data2, est="local_linear", bandwidth=5,
                              kernel="uniform"),
                check.names=FALSE)
 })

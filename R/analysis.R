@@ -25,6 +25,9 @@
 #' smoothers avoid biases that the one-sided kernels at the ends of
 #' the time series can create for the local constant smoothers.
 #'
+#' Using a uniform kernel will cause a warning about ignoring the
+#' kernel order that can safely be ignored.
+#'
 #' @param x A univariate or multivariate numeric time series object or
 #' a numeric vector or matrix.
 #' @param center_trend Character string giving method of calculating
@@ -52,10 +55,46 @@
 #' \code{x} if \code{x} is a time series. It should be positive.
 #' @param nmulti Integer giving the number of starting pionts in
 #' search for bandwidths if any are selected by cross validation.
+#' @return A list with elements '"centered"' and '"acf"'. '"centered"'
+#' is a list of the detrend time series and the bandwidth used in the
+#' detrening. '"acf"' is a list of the smoothed estimate of the acf
+#' and the bandwidth used. If no bandwidth were used they will be
+#' NULL.
 #'
 #' @seealso \code{\link{acf}} for regular autcorrelation estimation
 #' @export
+#' @examples
 #'
+#' # A highly autocorrelated time series
+#' x <- 1:10
+#' get_dynamic_acf(x, acf_bandwidth=3)
+#'
+#' # Plot log of acf
+#' plot(log(get_dynamic_acf(x, acf_bandwidth=3)$acf$smooth))
+#'
+#' # Check estimates with AR1 simulations with lag-1 core 0.1
+#' w <- rnorm(1000)
+#' xnext <- function(xlast, w) 0.1 * xlast + w
+#' x <- Reduce(xnext, x=w, init=0, accumulate=TRUE)
+#' acf(x, lag.max=1, plot=FALSE)
+#' head(get_dynamic_acf(x, acf_bandwidth=length(x))$acf$smooth)
+#'
+#' # Check detrending ability
+#' x2 <- x + seq(1, 10, len=length(x))
+#' ans <- get_dynamic_acf(x2, center_trend="local_linear",
+#'                        center_bandwidth=length(x), acf_bandwidth=length(x))
+#' head(ans$acf$smooth)
+#'
+#' # The simple acf estimate is inflated by the trend
+#' acf(x2, lag.max=1, plot=FALSE)
+#'
+#'# Check ability to estimate time-dependent autocorrelation
+#' xnext <- function(xlast, w) 0.8 * xlast + w
+#' xhi <- Reduce(xnext, x=w, init=0, accumulate=TRUE)
+#' acf(xhi, lag.max=1, plot=FALSE)
+#' wt <- seq(0, 1, len=length(x))
+#' xdynamic <- wt * xhi + (1 - wt) * x
+#' get_dynamic_acf(xdynamic, acf_bandwidth=100)$acf$smooth
 get_dynamic_acf <- function(x, center_trend="grand_mean",
                             center_kernel="gaussian",
                             center_bandwidth=NULL,
