@@ -1,5 +1,29 @@
 
-#' Estimate time-dependent autocorrelation function from ensemble time series
+#' Get dynamic autocorrelation function.
+#'
+#' \code{get_dynamic_acf} estimates time-dependent autocorrelation function from ensemble time series.
+#'
+#' Any missing values in 'x' will cause an error.
+#'
+#' Bandwidths affect weights in local smoothers as follows. To get the
+#' local estimate corresponding to index i, the distance to each other
+#' index j is calculated as (i - j) / h, where h is the
+#' bandwidth. Then that distance is plugged into the kernel function
+#' to obtain a weight. The weights are normalized to sum to one for
+#' each index.
+#'
+#' The gaussian kernel is a second order kernel that corresponds to
+#' the gaussian density function. The uniform kernel is an indicator
+#' function of whether the distance is less than 1. Thus selecting a
+#' uniform kernel with a bandwidth of 2 is equivalent to a sliding
+#' window of length 3 that is centered on the focal
+#' index.
+#'
+#' '"local_constant"' smoothers are local means computed with the
+#' kernel weights. '"local_linear"' smoothers are the fitted values of
+#' local linear regressions with the kernel weights. The linear
+#' smoothers avoid biases that the one-sided kernels at the ends of
+#' the time series can create for the local constant smoothers.
 #'
 #' @param x A univariate or multivariate numeric time series object or
 #' a numeric vector or matrix.
@@ -29,9 +53,9 @@
 #' @param nmulti Integer giving the number of starting pionts in
 #' search for bandwidths if any are selected by cross validation.
 #'
+#' @seealso \code{\link{acf}} for regular autcorrelation estimation
 #' @export
 #'
-#' @details Any missing values in 'x' will cause an error. bandwidths
 get_dynamic_acf <- function(x, center_trend="grand_mean",
                             center_kernel="gaussian",
                             center_bandwidth=NULL,
