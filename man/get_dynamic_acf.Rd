@@ -49,10 +49,10 @@ search for bandwidths if any are selected by cross validation.}
 }
 \value{
 A list with elements '"centered"' and '"acf"'. '"centered"'
-is a list of the detrend time series and the bandwidth used in the
-detrening. '"acf"' is a list of the smoothed estimate of the acf
-and the bandwidth used. If no bandwidth were used they will be
-NULL.
+is a list of the detrend time series, the trend subtracted, and the
+bandwidth used in the detrending. '"acf"' is a list of the smoothed
+estimate of the acf and the bandwidth used. If no bandwidth were
+used they will be NULL.
 }
 \description{
 \code{get_dynamic_acf} estimates time-dependent autocorrelation function from ensemble time series.

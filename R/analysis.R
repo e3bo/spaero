@@ -56,10 +56,10 @@
 #' @param nmulti Integer giving the number of starting pionts in
 #' search for bandwidths if any are selected by cross validation.
 #' @return A list with elements '"centered"' and '"acf"'. '"centered"'
-#' is a list of the detrend time series and the bandwidth used in the
-#' detrening. '"acf"' is a list of the smoothed estimate of the acf
-#' and the bandwidth used. If no bandwidth were used they will be
-#' NULL.
+#' is a list of the detrend time series, the trend subtracted, and the
+#' bandwidth used in the detrending. '"acf"' is a list of the smoothed
+#' estimate of the acf and the bandwidth used. If no bandwidth were
+#' used they will be NULL.
 #'
 #' @seealso \code{\link{acf}} for regular autcorrelation estimation
 #' @export
@@ -117,12 +117,13 @@ detrend <- function(x, trend=c("grand_mean", "ensemble_means",
   x <- na.fail(x)
   x <- as.matrix(x)
   if (!is.numeric(x)) stop("'x' must be numeric")
-
   rmn <- rowMeans(x)
   if (trend == "grand_mean"){
-    x <- x - mean(rmn)
+    center <- mean(rmn)
+    x <- x - center
   } else if (trend == "ensemble_means"){
-    x <- x - rmn
+    center <- rmn
+    x <- x - center
   } else if (trend == "local_constant"
              || trend == "local_linear"){
     samplet <- as.integer(nrow(x))
@@ -130,10 +131,11 @@ detrend <- function(x, trend=c("grand_mean", "ensemble_means",
     data <- data.frame(step=step, rmn=rmn)
     srm <- smooth(data=data, bandwidth=bandwidth, est=trend, kernel=kernel,
                   nmulti=nmulti)
-    x <- x - srm$smooth
+    center <- srm$smooth
+    x <- x - center
     bandwidth <- srm$bandwidth
   }
-  list(x=x, bandwidth=bandwidth)
+  list(x=x, center=center, bandwidth=bandwidth)
 }
 
 smooth <- function(data, est, bandwidth, kernel="gaussian", nmulti=5){
