@@ -70,3 +70,23 @@ test_that("Smoothing function works as expected", {
                              kernel="uniform"),
                check.names=FALSE)
 })
+
+context("cross validation")
+
+test_that("Cross validation of mean bandwidth produces reasonable results", {
+     w <- rnorm(100)
+     xnext <- function(xlast, w) 0.1 * xlast + w
+     x <- Reduce(xnext, x=w, init=0, accumulate=TRUE)
+     dacf <- get_dynamic_acf(x, center_trend="local_constant",
+                             acf_bandwidth=length(x))
+     expect_gt(dacf$centered$bandwidth, length(x) / 2)
+     xx <- x + seq_along(x) * 100
+     dacf <- get_dynamic_acf(xx, center_trend="local_constant",
+                             acf_bandwidth=length(x))
+     expect_lt(dacf$centered$bandwidth, 1)
+     xx <- x + sin(seq_along(x) / 10) * 10
+     dacf <- get_dynamic_acf(xx, center_trend="local_linear",
+                             acf_bandwidth=length(x))
+     expect_gt(dacf$centered$bandwidth, 1)
+     expect_lt(dacf$centered$bandwidth, 5)
+})
