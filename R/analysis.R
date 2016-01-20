@@ -174,17 +174,17 @@ autocor <- function(x, cortype=c("correlation", "covariance"), lag=1,
   xx_lag <- rowMeans(x1 * x2)
 
   step <- seq(start2, n)
-  data <- data.frame(step=step, rmn=xx_lag)
-  smth_xx_lag <- smooth(data=data, bandwidth=bandwidth, kernel=kernel,
-                est=trend, nmulti=nmulti)
-  if (cortype == "correlation") {
+  if (cortype == "covariance"){
+    data <- data.frame(step=step, rmn=xx_lag)
+    smth_xx_lag <- smooth(data=data, bandwidth=bandwidth, kernel=kernel,
+                          est=trend, nmulti=nmulti)
+    list(smooth=smth_xx_lag, bandwidth=smth_xx_lag$bandwidth)
+  }
+  else if (cortype == "correlation") {
     xx <- rowMeans(x1 * x1) * 0.5 + rowMeans(x2 * x2) * 0.5
-    data <- data.frame(step=step, rmn=xx)
-    smth_xx <- smooth(data=data, bandwidth=smth_xx_lag$bandwidth,
-                      kernel=kernel, est=trend, nmulti=nmulti)
-    list(smooth=smth_xx_lag$smooth / smth_xx$smooth,
-         bandwidth=smth_xx$bandwidth)
-  } else {
-    smth_xx_lag
+    data <- data.frame(step=step, rmn=xx_lag / xx)
+    smth_xx_lag_cor <- smooth(data=data, bandwidth=bandwidth,
+                              kernel=kernel, est=trend, nmulti=nmulti)
+    list(smooth=smth_xx_lag_cor$smooth, bandwidth=smth_xx_lag_cor$bandwidth)
   }
 }

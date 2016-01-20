@@ -90,3 +90,29 @@ test_that("Cross validation of mean bandwidth produces reasonable results", {
      expect_gt(dacf$centered$bandwidth, 1)
      expect_lt(dacf$centered$bandwidth, 5)
 })
+
+test_that("Cross validation of acf bandwidth produces reasonable results", {
+     n <- 100
+     gen_ar1 <- function(n, phi=0.1){
+       w <- rnorm(n)
+       init <- rnorm(n=1, sd=sqrt(1 / (1 - phi^2)))
+       xnext <- function(xlast, w) phi * xlast + w
+       Reduce(xnext, x=w, init=init, accumulate=TRUE)
+     }
+     set.seed(123)
+     n <- 100
+     nts <- 100
+     x <- replicate(nts, gen_ar1(n=n, phi=0.1))
+     dacf <- get_dynamic_acf(x, center_trend="local_linear",
+                             center_bandwidth=n,
+                             acf_trend="local_linear")
+     expect_gt(dacf$acf$bandwidth, n / 2)
+
+     nts <- 100
+     n <- 100
+     x <- replicate(nts, gen_ar1(n=n, phi=0.9))
+     dacf <- get_dynamic_acf(x, center_trend="local_linear",
+                             center_bandwidth=n,
+                             acf_trend="local_linear")
+
+})
