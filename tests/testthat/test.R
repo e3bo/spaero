@@ -102,13 +102,23 @@ test_that("large bandwidth autocor estimates agree with acf", {
   w <- rnorm(1000)
   xnext <- function(xlast, w) 0.1 * xlast + w
   x <- Reduce(xnext, x=w, init=0, accumulate=TRUE)
-  stats_est <- stats::acf(x, lag.max=1, plot=FALSE)$acf[2,1,1]
+
+  stats_est <- stats::acf(x, lag.max=1, plot=FALSE)$acf[2, 1, 1]
   spaero_est <- autocor(x, bandwidth=length(x) * 10)$smooth[1]
+  expect_equal(stats_est, spaero_est, tolerance=0.05)
+
+  stats_est <- stats::acf(x, lag.max=1, plot=FALSE,
+                          type="covariance")$acf[2, 1, 1]
+  spaero_est <- autocor(x, bandwidth=length(x) * 10,
+                        cortype="covariance")$smooth[1]
   expect_equal(stats_est, spaero_est, tolerance=0.05)
 
   xnext <- function(xlast, w) 0.9 * xlast + w
   x <- Reduce(xnext, x=w, init=0, accumulate=TRUE)
-  stats_est <- stats::acf(x, lag.max=1, plot=FALSE)$acf[2,1,1]
+
+  stats_est <- stats::acf(x, lag.max=1, plot=FALSE)$acf[2, 1, 1]
   spaero_est <- autocor(x, bandwidth=length(x) * 10)$smooth[1]
   expect_equal(stats_est, spaero_est, tolerance=0.05)
+
+
 })
