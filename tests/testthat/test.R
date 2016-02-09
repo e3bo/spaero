@@ -23,10 +23,10 @@ test_that("Kernel-based detrending works", {
   x_ind <- seq_along(x)
   expect_equal(
     detrend(x, trend="local_constant", bandwidth=2, kernel="uniform")$x,
-      matrix(x -  ksmooth(x=x_ind, y=x, "box", bandwidth=2, x.points=x_ind)$y))
+matrix(x - stats::ksmooth(x=x_ind, y=x, "box", bandwidth=2, x.points=x_ind)$y))
   expect_equal(
     detrend(x, trend="local_constant", bandwidth=3, kernel="uniform")$x,
-      matrix(x -  ksmooth(x=x_ind, y=x, "box", bandwidth=4, x.points=x_ind)$y))
+matrix(x - stats::ksmooth(x=x_ind, y=x, "box", bandwidth=4, x.points=x_ind)$y))
 })
 
 test_that("Skipping detrending works", {
@@ -88,4 +88,27 @@ test_that("invalid bandwidths lead to errors", {
     regexp="argument \"bandwidth\" must be provided as a single numeric value")
   expect_error(smooth(data, bandwidth=0.5),
     regexp="argument \"bandwidth\" must be >= 1")
-          })
+})
+
+context("autocor")
+
+test_that("invalid arguments lead to errors", {
+  expect_error(autocor(NA))
+  expect_error(autocor(letters), regexp="'x' must be numeric")
+  expect_error(autocor(1:10, lag=-1), regexp="'lag' must be >= 0")
+})
+
+test_that("large bandwidth autocor estimates agree with acf", {
+  w <- rnorm(1000)
+  xnext <- function(xlast, w) 0.1 * xlast + w
+  x <- Reduce(xnext, x=w, init=0, accumulate=TRUE)
+  stats_est <- stats::acf(x, lag.max=1, plot=FALSE)$acf[2,1,1]
+  spaero_est <- autocor(x, bandwidth=length(x) * 10)$smooth[1]
+  expect_equal(stats_est, spaero_est, tolerance=0.05)
+
+  xnext <- function(xlast, w) 0.9 * xlast + w
+  x <- Reduce(xnext, x=w, init=0, accumulate=TRUE)
+  stats_est <- stats::acf(x, lag.max=1, plot=FALSE)$acf[2,1,1]
+  spaero_est <- autocor(x, bandwidth=length(x) * 10)$smooth[1]
+  expect_equal(stats_est, spaero_est, tolerance=0.05)
+})
