@@ -4,14 +4,13 @@ Version: 0.0.0.9000
 Authors@R: person("Eamon", "O'Dea", email = "odea35@gmail.com",
     role = c("aut", "cre"))
 Description: Implements non-parametric methods for anticipating the emergence
-    of infectious diseases from surveillance time series. Also provides support
-    for computational experiments testing the performance of such methods.
+    and eradication of infectious diseases from surveillance time series. Also
+    provides support for computational experiments testing the performance of
+    such methods.
 Depends:
     R (>= 3.2.1)
 License: MIT + file LICENSE
 LazyData: true
-Imports:
-    np (>= 0.60.2)
 Suggests:
     lintr (>= 0.3.3),
     testthat (>= 0.11.0)

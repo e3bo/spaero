@@ -7,7 +7,7 @@
 get_dynamic_acf(x, center_trend = "grand_mean", center_kernel = "gaussian",
   center_bandwidth = NULL, acf_trend = "local_constant",
   acf_kernel = "uniform", acf_bandwidth = NULL, acf = "correlation",
-  lag = 1, nmulti = 5)
+  lag = 1)
 }
 \arguments{
 \item{x}{A univariate or multivariate numeric time series object or
@@ -22,8 +22,7 @@ be partially matched.}
 local detrending. Allowed values are '"gaussian"' and '"uniform"'.}
 
 \item{center_bandwidth}{Bandwith of kernel for any local detrending
-done. If not supplied, a bandwidth will be selected by
-cross-validation of least squared error.}
+done.}
 
 \item{acf_trend}{Character string giving method of smoothed
 acf. Allowed values are '"local_constant"', and
@@ -33,8 +32,7 @@ acf. Allowed values are '"local_constant"', and
 smoothing of acf. Allowed values are '"gaussian"' and '"uniform"'.}
 
 \item{acf_bandwidth}{Bandwith of kernel for any local smoothing of
-acf done. If not supplied, a bandwidth will be selected by
-cross-validation of least squared error.}
+acf done.}
 
 \item{acf}{Character string giving the type of acf to be
 returned. Allowed values are '"correlation"' (the default), and
@@ -43,9 +41,6 @@ returned. Allowed values are '"correlation"' (the default), and
 \item{lag}{Integer lag at which to calculate the acf. This lag is in terms
 of the index of \code{x} and does not account for the frequency of
 \code{x} if \code{x} is a time series. It should be positive.}
-
-\item{nmulti}{Integer giving the number of starting pionts in
-search for bandwidths if any are selected by cross validation.}
 }
 \value{
 A list with elements '"centered"' and '"acf"'. '"centered"'
@@ -55,7 +50,8 @@ estimate of the acf and the bandwidth used. If no bandwidth were
 used they will be NULL.
 }
 \description{
-\code{get_dynamic_acf} estimates time-dependent autocorrelation function from ensemble time series.
+\code{get_dynamic_acf} estimates time-dependent autocorrelation
+function from ensemble time series.
 }
 \details{
 Any missing values in 'x' will cause an error.
@@ -67,21 +63,17 @@ bandwidth. Then that distance is plugged into the kernel function
 to obtain a weight. The weights are normalized to sum to one for
 each index.
 
-The gaussian kernel is a second order kernel that corresponds to
-the gaussian density function. The uniform kernel is an indicator
-function of whether the distance is less than 1. Thus selecting a
-uniform kernel with a bandwidth of 2 is equivalent to a sliding
-window of length 3 that is centered on the focal
-index.
+The gaussian kernel is equivalent to a standard Gaussian density
+function. The uniform kernel is an indicator function of whether
+the distance is less than 1. Thus selecting a uniform kernel with a
+bandwidth of 2 is equivalent to a sliding window of length 3 that
+is centered on the focal index.
 
 '"local_constant"' smoothers are local means computed with the
 kernel weights. '"local_linear"' smoothers are the fitted values of
 local linear regressions with the kernel weights. The linear
 smoothers avoid biases that the one-sided kernels at the ends of
 the time series can create for the local constant smoothers.
-
-Using a uniform kernel will cause a warning about ignoring the
-kernel order that can safely be ignored.
 }
 \examples{
 
