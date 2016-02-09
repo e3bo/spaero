@@ -18,6 +18,17 @@ test_that("Mean-based detrending works", {
                cbind(1:10, 2:11) - 1:10 - 0.5)
 })
 
+test_that("Kernel-based detrending works", {
+  x <- runif(1:10)
+  x_ind <- seq_along(x)
+  expect_equal(
+    detrend(x, trend="local_constant", bandwidth=2, kernel="uniform")$x,
+      matrix(x -  ksmooth(x=x_ind, y=x, "box", bandwidth=2, x.points=x_ind)$y))
+  expect_equal(
+    detrend(x, trend="local_constant", bandwidth=3, kernel="uniform")$x,
+      matrix(x -  ksmooth(x=x_ind, y=x, "box", bandwidth=4, x.points=x_ind)$y))
+})
+
 test_that("Skipping detrending works", {
   expect_equal(detrend(1:10, trend="assume_zero")$x, matrix(1:10))
 })
