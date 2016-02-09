@@ -84,7 +84,7 @@ test_that("Cross validation of mean bandwidth produces reasonable results", {
      xx <- x + seq_along(x) * 100
      dacf <- get_dynamic_acf(xx, center_trend="local_constant",
                              acf_bandwidth=length(x))
-     expect_lt(dacf$centered$bandwidth, 1)
+     expect_lt(dacf$centered$bandwidth, 2)
      xx <- x + sin(seq_along(x) / 10) * 10
      dacf <- get_dynamic_acf(xx, center_trend="local_linear",
                              acf_bandwidth=length(x))
@@ -104,16 +104,16 @@ test_that("Cross validation of acf bandwidth produces reasonable results", {
      n <- 100
      nts <- 100
      x <- replicate(nts, gen_ar1(n=n, phi=0.1))
-     dacf <- get_dynamic_acf(x, center_trend="local_linear",
+     dacf <- get_dynamic_acf(x, center_trend="local_constant",
                              center_bandwidth=n, acf_kernel="gaussian",
-                             acf_trend="local_linear")
+                             acf_trend="local_constant")
      expect_gt(dacf$acf$bandwidth, n / 2)
 
      nts <- 100
      n <- 100
      x <- replicate(nts, gen_ar1(n=n, phi=0.9))
-     dacf <- get_dynamic_acf(x, center_trend="local_linear",
+     dacf <- get_dynamic_acf(x, center_trend="local_constant",
                              center_bandwidth=n, acf_kernel="gaussian",
-                             acf_trend="local_linear")
+                             acf_trend="local_constant")
 
 })

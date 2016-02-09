@@ -12,21 +12,17 @@
 #' to obtain a weight. The weights are normalized to sum to one for
 #' each index.
 #'
-#' The gaussian kernel is a second order kernel that corresponds to
-#' the gaussian density function. The uniform kernel is an indicator
-#' function of whether the distance is less than 1. Thus selecting a
-#' uniform kernel with a bandwidth of 2 is equivalent to a sliding
-#' window of length 3 that is centered on the focal
-#' index.
+#' The gaussian kernel is equivalent to a standard Gaussian density
+#' function. The uniform kernel is an indicator function of whether
+#' the distance is less than 1. Thus selecting a uniform kernel with a
+#' bandwidth of 2 is equivalent to a sliding window of length 3 that
+#' is centered on the focal index.
 #'
 #' '"local_constant"' smoothers are local means computed with the
 #' kernel weights. '"local_linear"' smoothers are the fitted values of
 #' local linear regressions with the kernel weights. The linear
 #' smoothers avoid biases that the one-sided kernels at the ends of
 #' the time series can create for the local constant smoothers.
-#'
-#' Using a uniform kernel will cause a warning about ignoring the
-#' kernel order that can safely be ignored.
 #'
 #' @param x A univariate or multivariate numeric time series object or
 #' a numeric vector or matrix.
@@ -53,8 +49,9 @@
 #' @param lag Integer lag at which to calculate the acf. This lag is in terms
 #' of the index of \code{x} and does not account for the frequency of
 #' \code{x} if \code{x} is a time series. It should be positive.
-#' @param nmulti Integer giving the number of starting pionts in
-#' search for bandwidths if any are selected by cross validation.
+#' @param nsubsets Integer giving the number of subsets of the data
+#' for which to estimate the prediction error for the final data point
+#' for any cross-validated bandwidth choice.
 #' @return A list with elements '"centered"' and '"acf"'. '"centered"'
 #' is a list of the detrend time series, the trend subtracted, and the
 #' bandwidth used in the detrending. '"acf"' is a list of the smoothed
@@ -100,18 +97,20 @@ get_dynamic_acf <- function(x, center_trend="grand_mean",
                             center_bandwidth=NULL,
                             acf_trend="local_constant",
                             acf_kernel="uniform", acf_bandwidth=NULL,
-                            acf="correlation", lag=1, nmulti=5){
+                            acf="correlation", lag=1, nsubsets=20){
   centered <- detrend(x, trend=center_trend, kernel=center_kernel,
-                      bandwidth=center_bandwidth, nmulti=nmulti)
+                      bandwidth=center_bandwidth,
+                      nsubsets=nsubsets)
   acf <- autocor(centered$x, trend=acf_trend, acf_kernel,
-                 bandwidth=acf_bandwidth, cortype=acf, lag=lag)
+                 bandwidth=acf_bandwidth, cortype=acf, lag=lag,
+                 nsubsets=nsubsets)
   list(centered=centered, acf=acf)
 }
 
 detrend <- function(x, trend=c("grand_mean", "ensemble_means",
                            "local_constant", "local_linear"),
                     kernel=c("gaussian", "uniform"),
-                    bandwidth=NULL, nmulti=5){
+                    bandwidth=NULL, nsubsets){
   trend <- match.arg(trend)
   kernel <- match.arg(kernel)
   x <- na.fail(x)
@@ -130,7 +129,7 @@ detrend <- function(x, trend=c("grand_mean", "ensemble_means",
     step <- seq(1, samplet)
     data <- data.frame(step=step, rmn=rmn)
     srm <- smooth(data=data, bandwidth=bandwidth, est=trend, kernel=kernel,
-                  nmulti=nmulti)
+                  nsubsets=nsubsets)
     center <- srm$smooth
     x <- x - center
     bandwidth <- srm$bandwidth
@@ -138,7 +137,58 @@ detrend <- function(x, trend=c("grand_mean", "ensemble_means",
   list(x=x, center=center, bandwidth=bandwidth)
 }
 
-smooth <- function(data, est, bandwidth, kernel="gaussian", nmulti=5){
+smooth <- function(data, est, kernel="gaussian", bandwidth, nsubsets=100){
+  if(kernel == "gaussian") {
+    kern <- function(ind, bw=bandwidth){
+      dist <- abs(data$step - ind) / bw
+      w <- dnorm(dist)
+      w / sum(w)
+    }
+  } else {
+    kern <- function(ind, bw=bandwidth){
+      dist <- abs(data$step - ind) / bw
+      w <- dist < 1
+      w / sum(w)
+    }
+  }
+  if (is.null(bandwidth)){
+    bandwidth <- cv_bandwidth(data, est, kernel, nsubsets)
+  }
+  w <- sapply(data$step, kern)
+  if (est == "local_constant"){
+    smooth <- colSums(w * data$rmn)
+  } else {
+    wlm <- function(x){
+      m <- lm(rmn~step, weights=w[, x], data=data)
+      fitted(m)[x]
+    }
+    smooth <- sapply(seq_along(data$step), wlm)
+  }
+  list(smooth=smooth, bandwidth=bandwidth)
+}
+
+cv_bandwidth <- function(data, est, kernel, nsubsets){
+  nobs <- nrow(data)
+  nsubs <- min(nsubsets, nobs)
+  if (nsubs <  1) stop("At least 2 observations required for cross-validation")
+  final_indices <- round(seq(1, nsubs) * nobs / nsubs)
+  get_subset <- function(x) {
+    data[1:x, ]
+  }
+  subs <- lapply(final_indices, get_subset)
+  ss_error <- function(bandwidth){
+    get_error <- function(sub) {
+      n <- nrow(sub)
+      sm <- smooth(data=sub[-n, ], est=est, kernel=kernel, bandwidth=bandwidth)
+      sm$smooth[n - 1] - sub$rmn[n]
+    }
+    pred_error <- sapply(subs, get_error)
+    sum(pred_error ^ 2)
+  }
+  optimize(ss_error, interval=c(1, nobs))$minimum
+}
+
+np_smooth <- function(data, est, bandwidth, kernel="gaussian", nmulti=5){
   is.constant <- grepl("constant", est)
   rt <- ifelse(is.constant, "lc", "ll")
   if (!is.null(bandwidth)){
@@ -157,7 +207,7 @@ smooth <- function(data, est, bandwidth, kernel="gaussian", nmulti=5){
 
 autocor <- function(x, cortype=c("correlation", "covariance"), lag=1,
                     bandwidth=NULL, trend=c("local_constant", "local_linear"),
-                    kernel=c("gaussian", "uniform"), nmulti=5){
+                    kernel=c("gaussian", "uniform"), nsubsets){
   trend <- match.arg(trend)
   cortype <- match.arg(cortype)
   kernel <- match.arg(kernel)
@@ -177,14 +227,14 @@ autocor <- function(x, cortype=c("correlation", "covariance"), lag=1,
   if (cortype == "covariance"){
     data <- data.frame(step=step, rmn=xx_lag)
     smth_xx_lag <- smooth(data=data, bandwidth=bandwidth, kernel=kernel,
-                          est=trend, nmulti=nmulti)
+                          est=trend, nsubsets)
     list(smooth=smth_xx_lag, bandwidth=smth_xx_lag$bandwidth)
   }
   else if (cortype == "correlation") {
     xx <- rowMeans(x1 * x1) * 0.5 + rowMeans(x2 * x2) * 0.5
     data <- data.frame(step=step, rmn=xx_lag / xx)
     smth_xx_lag_cor <- smooth(data=data, bandwidth=bandwidth,
-                              kernel=kernel, est=trend, nmulti=nmulti)
+                              kernel=kernel, est=trend, nsubsets=nsubsets)
     list(smooth=smth_xx_lag_cor$smooth, bandwidth=smth_xx_lag_cor$bandwidth)
   }
 }
