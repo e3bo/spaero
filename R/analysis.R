@@ -34,14 +34,14 @@
 #' @param center_kernel Character string giving the kernel for any
 #' local detrending. Allowed values are '"gaussian"' and '"uniform"'.
 #' @param center_bandwidth Bandwith of kernel for any local detrending
-#' done.
+#' done. A numeric value >= 1.
 #' @param acf_trend Character string giving method of smoothed
 #' acf. Allowed values are '"local_constant"', and
 #' '"local_linear"'. Will be partially matched.
 #' @param acf_kernel Character string giving the kernel for local
 #' smoothing of acf. Allowed values are '"gaussian"' and '"uniform"'.
 #' @param acf_bandwidth Bandwith of kernel for any local smoothing of
-#' acf done.
+#' acf done. A numeric value >= 1.
 #' @param acf Character string giving the type of acf to be
 #' returned. Allowed values are '"correlation"' (the default), and
 #' '"covariance"'. Will be partially matched.
@@ -134,8 +134,8 @@ detrend <- function(x, trend=c("grand_mean", "ensemble_means",
 }
 
 smooth <- function(data, est, kernel="gaussian", bandwidth){
-  if (is.null(bandwidth)) {
-    stop("argument \"bandwidth\" must be provided for kernel smoothing")
+  if (!is.numeric(bandwidth) || length(bandwidth) > 1) {
+    stop("argument \"bandwidth\" must be provided as a single numeric value")
   } else if (bandwidth < 1){
     stop("argument \"bandwidth\" must be >= 1")
   }

@@ -22,7 +22,7 @@ the trend to subtract. Allowed values are '"assume_zero"',
 local detrending. Allowed values are '"gaussian"' and '"uniform"'.}
 
 \item{center_bandwidth}{Bandwith of kernel for any local detrending
-done.}
+done. A numeric value >= 1.}
 
 \item{acf_trend}{Character string giving method of smoothed
 acf. Allowed values are '"local_constant"', and
@@ -32,7 +32,7 @@ acf. Allowed values are '"local_constant"', and
 smoothing of acf. Allowed values are '"gaussian"' and '"uniform"'.}
 
 \item{acf_bandwidth}{Bandwith of kernel for any local smoothing of
-acf done.}
+acf done. A numeric value >= 1.}
 
 \item{acf}{Character string giving the type of acf to be
 returned. Allowed values are '"correlation"' (the default), and

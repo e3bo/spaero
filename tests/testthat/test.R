@@ -64,3 +64,17 @@ if (requireNamespace("np", quietly = TRUE)) {
                  check.names=FALSE)
     })
 }
+
+context("smoothing arguments")
+
+test_that("invalid bandwidths lead to errors", {
+  data <- data.frame(step=1:10, rmn=1:10)
+  expect_error(smooth(data),
+    regexp="argument \"bandwidth\" is missing, with no default")
+  expect_error(smooth(data, bandwidth=c(1:20)),
+    regexp="argument \"bandwidth\" must be provided as a single numeric value")
+  expect_error(smooth(data, bandwidth="hmm"),
+    regexp="argument \"bandwidth\" must be provided as a single numeric value")
+  expect_error(smooth(data, bandwidth=0.5),
+    regexp="argument \"bandwidth\" must be >= 1")
+          })
