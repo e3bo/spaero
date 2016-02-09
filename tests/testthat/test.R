@@ -16,7 +16,11 @@ test_that("Mean-based detrending works", {
   expect_equal(detrend(1:10, trend="ensemble")$x, matrix(rep(0, 10)))
   expect_equal(detrend(cbind(1:10, 2:11), trend="ensemble")$x,
                cbind(1:10, 2:11) - 1:10 - 0.5)
-  })
+})
+
+test_that("Skipping detrending works", {
+  expect_equal(detrend(1:10, trend="assume_zero")$x, matrix(1:10))
+})
 
 context("smoothing")
 

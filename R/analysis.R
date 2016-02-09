@@ -28,9 +28,9 @@
 #' @param x A univariate or multivariate numeric time series object or
 #' a numeric vector or matrix.
 #' @param center_trend Character string giving method of calculating
-#' the trend to subtract. Allowed values are '"grand_mean"',
-#' '"ensemble_means"', '"local_constant"', and '"local_linear"'. Will
-#' be partially matched.
+#' the trend to subtract. Allowed values are '"assume_zero"',
+#' '"grand_mean"', '"ensemble_means"', '"local_constant"', and
+#' '"local_linear"'. Will be partially matched.
 #' @param center_kernel Character string giving the kernel for any
 #' local detrending. Allowed values are '"gaussian"' and '"uniform"'.
 #' @param center_bandwidth Bandwith of kernel for any local detrending
@@ -102,7 +102,8 @@ get_dynamic_acf <- function(x, center_trend="grand_mean",
 }
 
 detrend <- function(x, trend=c("grand_mean", "ensemble_means",
-                           "local_constant", "local_linear"),
+                           "local_constant", "local_linear",
+                               "assume_zero"),
                     kernel=c("gaussian", "uniform"),
                     bandwidth=NULL){
   trend <- match.arg(trend)
@@ -126,6 +127,8 @@ detrend <- function(x, trend=c("grand_mean", "ensemble_means",
     center <- srm$smooth
     x <- x - center
     bandwidth <- srm$bandwidth
+  } else if (trend == "assume_zero"){
+    center <- rep(0, nrow(x))
   }
   list(x=x, center=center, bandwidth=bandwidth)
 }

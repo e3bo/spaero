@@ -14,9 +14,9 @@ get_dynamic_acf(x, center_trend = "grand_mean", center_kernel = "gaussian",
 a numeric vector or matrix.}
 
 \item{center_trend}{Character string giving method of calculating
-the trend to subtract. Allowed values are '"grand_mean"',
-'"ensemble_means"', '"local_constant"', and '"local_linear"'. Will
-be partially matched.}
+the trend to subtract. Allowed values are '"assume_zero"',
+'"grand_mean"', '"ensemble_means"', '"local_constant"', and
+'"local_linear"'. Will be partially matched.}
 
 \item{center_kernel}{Character string giving the kernel for any
 local detrending. Allowed values are '"gaussian"' and '"uniform"'.}
