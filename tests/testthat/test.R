@@ -122,3 +122,36 @@ test_that("large bandwidth autocor estimates agree with acf", {
 
 
 })
+
+context("expected use of get_dynamic_acf")
+
+test_that("estimate of time-dependent autocorrelation consistent", {
+  make_time_dependent_updater <- function(f) {
+    t <- 0
+    updater <- function(xlast, w) {
+      t <<- t + 1
+      phi <- f(t)
+      phi * xlast + w
+    }
+    return(updater)
+  }
+  phi_t <- function(t) {
+    lambda <- min(-1  + 0.01 * t, 0)
+    exp (lambda)
+  }
+
+  nensemble <- 1000
+  nobs <- 90
+  x <- matrix(nrow=nobs, ncol=nensemble)
+  for (i in seq(1, nensemble)){
+    updater <- make_time_dependent_updater(f=phi_t)
+    w <- rnorm(nobs)
+    init <- rnorm(n=1, sd=sqrt(1.15))
+    x[, i] <- Reduce(updater, x=w, init=init, accumulate=TRUE)[-1]
+  }
+  est <- get_dynamic_acf(x, center_trend="assume_zero", acf_bandwidth=3)
+  lambda_ests <- log(est$acf$smooth)
+  lambda_known <- seq(-1 + 0.02, by=0.01, len=nobs - 1)
+  error <- lambda_ests - lambda_known
+  expect_lt(sqrt(mean(error ^ 2)), 0.05)
+})
