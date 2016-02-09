@@ -22,55 +22,45 @@ test_that("Skipping detrending works", {
   expect_equal(detrend(1:10, trend="assume_zero")$x, matrix(1:10))
 })
 
-context("smoothing")
+if (requireNamespace("np", quietly = TRUE)) {
+  if (is.null(options("np.messages")$np.messages)) options(np.messages = TRUE)
+  if (is.null(options("np.tree")$np.tree)) options(np.tree = FALSE)
 
-test_that("Smoothing function works as expected", {
-  simple_smooth <- function(data, est, kernel="gaussian", bandwidth){
-    if(kernel == "gaussian") {
-      kern <- function(ind, bw=bandwidth){
-        dist <- abs(data$step - ind) / bw
-        w <- dnorm(dist)
-        w / sum(w)
-      }
-    } else {
-      kern <- function(ind, bw=bandwidth){
-        dist <- abs(data$step - ind) / bw
-        w <- dist < 1
-        w / sum(w)
-      }
+  context("smoothing")
+
+  test_that("Smoothing function works as expected", {
+    np_smooth <- function(data, est, bandwidth, kernel="gaussian"){
+      is.constant <- grepl("constant", est)
+      rt <- ifelse(is.constant, "lc", "ll")
+      bw <- np::npregbw(formula=rmn ~ step, bws=bandwidth,
+                        regtype=rt, ckertype=kernel,
+                        bandwidth.compute=FALSE, data=data,
+                        na.action=na.fail)
+      mod <- np::npreg(bw)
+      list(smooth=fitted(mod), bandwidth=bw$bw)
     }
-    w <- sapply(data$step, kern)
-    if (est == "local_constant"){
-      colSums(w * data$rmn)
-    } else {
-      wlm <- function(x){
-        m <- lm(rmn~step, weights=w[, x], data=data)
-        fitted(m)[x]
-      }
-      sapply(seq_along(data$step), wlm)
-    }
-  }
-  data <- data.frame(step=1:10, rmn=1:10)
-  expect_equal(smooth(data, est="local_constant", bandwidth=2)$smooth,
-               simple_smooth(data, est="local_constant",  bandwidth=2))
-  expect_equal(smooth(data, est="local_linear", bandwidth=2)$smooth,
-               simple_smooth(data, est="local_linear",  bandwidth=2),
-               check.names=FALSE)
+    data <- data.frame(step=1:10, rmn=1:10)
+    expect_equal(smooth(data, est="local_constant", bandwidth=2)$smooth,
+                 np_smooth(data, est="local_constant",  bandwidth=2)$smooth)
+    expect_equal(smooth(data, est="local_linear", bandwidth=2)$smooth,
+                 np_smooth(data, est="local_linear",  bandwidth=2)$smooth,
+                 check.names=FALSE)
 
-  expect_equal(smooth(data, est="local_constant", kernel="uniform",
-                      bandwidth=3)$smooth,
-               simple_smooth(data, est="local_constant", kernel="uniform",
-                             bandwidth=3))
-  expect_equal(smooth(data, est="local_linear", bandwidth=3)$smooth,
-               simple_smooth(data, est="local_linear", bandwidth=3),
-               check.names=FALSE)
+    expect_equal(smooth(data, est="local_constant", kernel="uniform",
+                        bandwidth=3)$smooth,
+                 np_smooth(data, est="local_constant", kernel="uniform",
+                           bandwidth=3)$smooth)
+    expect_equal(smooth(data, est="local_linear", bandwidth=3)$smooth,
+                 np_smooth(data, est="local_linear", bandwidth=3)$smooth,
+                 check.names=FALSE)
 
-  data2 <- data.frame(step=20:100, rmn=rnorm(81))
-  expect_equal(smooth(data2, est="local_constant", bandwidth=5)$smooth,
-               simple_smooth(data2, est="local_constant", bandwidth=5))
-  expect_equal(smooth(data2, est="local_linear", bandwidth=5,
-                      kernel="uniform")$smooth,
-               simple_smooth(data2, est="local_linear", bandwidth=5,
-                             kernel="uniform"),
-               check.names=FALSE)
-})
+    data2 <- data.frame(step=20:100, rmn=rnorm(81))
+    expect_equal(smooth(data2, est="local_constant", bandwidth=5)$smooth,
+                 np_smooth(data2, est="local_constant", bandwidth=5)$smooth)
+    expect_equal(smooth(data2, est="local_linear", bandwidth=5,
+                        kernel="uniform")$smooth,
+                 np_smooth(data2, est="local_linear", bandwidth=5,
+                           kernel="uniform")$smooth,
+                 check.names=FALSE)
+    })
+}
