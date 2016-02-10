@@ -129,8 +129,8 @@ test_that("estimate of time-dependent autocorrelation consistent", {
   make_time_dependent_updater <- function(f) {
     t <- 0
     updater <- function(xlast, w) {
-      t <<- t + 1
       phi <- f(t)
+      t <<- t + 1
       phi * xlast + w
     }
     return(updater)
@@ -139,19 +139,26 @@ test_that("estimate of time-dependent autocorrelation consistent", {
     lambda <- min(-1  + 0.01 * t, 0)
     exp (lambda)
   }
-
   nensemble <- 1000
   nobs <- 90
   x <- matrix(nrow=nobs, ncol=nensemble)
   for (i in seq(1, nensemble)){
     updater <- make_time_dependent_updater(f=phi_t)
-    w <- rnorm(nobs)
+    w <- rnorm(nobs - 1)
     init <- rnorm(n=1, sd=sqrt(1.15))
-    x[, i] <- Reduce(updater, x=w, init=init, accumulate=TRUE)[-1]
+    x[, i] <- Reduce(updater, x=w, init=init, accumulate=TRUE)
   }
   est <- get_dynamic_acf(x, center_trend="assume_zero", acf_bandwidth=3)
   lambda_ests <- log(est$acf$smooth)
-  lambda_known <- seq(-1 + 0.02, by=0.01, len=nobs - 1)
+  lambda_known <- seq(from=-1, by=0.01, len=nobs - 1)
+  error <- lambda_ests - lambda_known
+  expect_lt(sqrt(mean(error ^ 2)), 0.05)
+
+  trend <- sin(2 * pi * (1:nobs) / nobs)
+  xx <- x + trend
+  est <- get_dynamic_acf(xx, center_trend="local_constant", center_bandwidth=3,
+                         acf_bandwidth=3)
+  lambda_ests <- log(est$acf$smooth)
   error <- lambda_ests - lambda_known
   expect_lt(sqrt(mean(error ^ 2)), 0.05)
 })
