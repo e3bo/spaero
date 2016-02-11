@@ -1,0 +1,26 @@
+---
+title: "Getting Started with spaero"
+author: "Eamon O'Dea"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+The spaero package (pronounced sparrow) currently supports the
+estimation of statistics along moving windows of time series. Such
+estimates may in some cases provide signals that the system generating
+the data is approaching a critical transition. Examples of critical
+transitions include the eutrophication of lakes, changes in climate,
+and emergence or eradication of infectious diseases. The spearo
+package will be further developed to further support statistical
+methods to predict critical transititions in infectious disease
+systems. Because these methods will be based on generic properties of
+dynamical systems, they have the potential to apply to a broad range
+of models. The spaero package will also be developed to support
+computational experiments designed to evaluate these methods. This
+document provides a rudimentary demonstration of such methods on
+simulated data.
+

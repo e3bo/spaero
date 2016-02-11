@@ -14,5 +14,8 @@ LazyData: true
 Suggests:
     lintr (>= 0.3.3),
     testthat (>= 0.11.0),
-    np (>= 0.60.2)
+    np (>= 0.60.2),
+    knitr (>= 1.11),
+    rmarkdown (>= 0.9.2)
 RoxygenNote: 5.0.1
+VignetteBuilder: knitr
