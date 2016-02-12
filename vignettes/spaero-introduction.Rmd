@@ -2,7 +2,8 @@
 title: "Getting Started with spaero"
 author: "Eamon O'Dea"
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output: rmarkdown::pdf_document
+bibliography: ews.bib
 vignette: >
   %\VignetteIndexEntry{Vignette Title}
   %\VignetteEngine{knitr::rmarkdown}
@@ -10,7 +11,7 @@ vignette: >
 ---
 
 The spaero package (pronounced sparrow) currently supports the
-estimation of statistics along moving windows of time series. Such
+estimation of statistics along rolling windows of time series. Such
 estimates may in some cases provide signals that the system generating
 the data is approaching a critical transition. Examples of critical
 transitions include the eutrophication of lakes, changes in climate,
@@ -24,3 +25,66 @@ computational experiments designed to evaluate these methods. This
 document provides a rudimentary demonstration of such methods on
 simulated data.
 
+We will sample a time series from a linear noise approximation to an
+SIS (Susceptible--Infected--Susceptible) epidemic model. See
+@keeling2008 for an introduction to this model. The linear noise
+approximation is highly accurate for a large population, is easy to
+simulate from, and leads to simple expected values of the statistics
+we will estimate. The scaled fluctuations $z(t)$ of the number
+infected around its expected value follow the stochastic differential
+equation
+\begin{equation}
+\mathrm{d} z(t) = -az(t)\mathrm{d}t + b\mathrm{d}B(t),
+\end{equation}
+where where $B(t)$ is a standard Brownian motion and
+\begin{align}
+a &= -(\beta - 2 \beta I - \eta - \gamma), \\
+b &= \sqrt{\beta I (1 - I) + \eta (1 - I) + \gamma I},
+\end{align}
+are functions of the SIS model parameters [@oregan2013, eq. 14]. These
+parameters are $\beta$, the transmission rate; $\eta$, the rate of
+infection from outside of the population; $\gamma$, the recovery
+rate. $I$ is the expected fraction of infected individuals. $I$
+satisfies $0 = \beta I (1 - I) + \eta (1 - I) - \gamma I$ when the
+parameters are constant. If the parameters are changing at some small
+rate $\epsilon \ll 1$, $I$ still remains close to that solution
+[@kuehn2015]. By integrating over some time unit $\tau$, we find that
+$z(t + \tau | z(t))$ is normally distributed with a mean of $z(t)
+\mathrm{e}^{- a \tau}$ and a variance of $b^2 (1 - \mathrm{e}^{-2a
+\tau}) / (2 a)$ [@ibe2013]. Thus we can simulate an approximate time
+series of fluctuations as follows.
+```{r}
+set.seed(123)
+nobs <- 1000
+ts <- numeric(nobs)
+ts[1] <- 0
+beta <- 0.5
+gamma <- 1
+eta <- 1e-4
+delta_beta <- (gamma - beta) / nobs
+quadratic_formula <- function(a, b, c){
+  (-b - sqrt(b^2 - 4 * a * c)) / (2 * a)
+}
+for (t in seq(2, nobs)){
+  beta <- beta + delta_beta
+  I <- quadratic_formula(-beta, beta - eta - gamma, eta)
+  a <- -(beta - 2 * beta * I - eta - gamma)
+  b <- sqrt(beta * I * (1 - I) + eta * (1 - I) + gamma * I)
+  tau <- 1
+  phi <- exp(-a * tau)
+  sigma <- (1 - exp(-a * 2 * tau)) * b ^ 2 / (2 * a)
+  ts[t] <- phi * ts[t - 1] + sigma * rnorm(1)
+}
+```
+It is clear that many statistic would change if evaluated along rolling windows of this time series.
+```{r}
+plot(ts, xlab="time", ylab="fluctuation, z", type="l")
+```
+
+This paragraph explains how the moving windows work.
+
+This paragraph explains how the covariance is estimated.
+
+This paragraph explains shows how the estimates compare to theoretical expections.
+
+## References
