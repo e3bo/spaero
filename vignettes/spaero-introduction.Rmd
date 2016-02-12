@@ -51,12 +51,16 @@ rate $\epsilon \ll 1$, $I$ still remains close to that solution
 [@kuehn2015]. By integrating over some time unit $\tau$, we find that
 $z(t + \tau | z(t))$ is normally distributed with a mean of $z(t)
 \mathrm{e}^{- a \tau}$ and a variance of $b^2 (1 - \mathrm{e}^{-2a
-\tau}) / (2 a)$ [@ibe2013]. Thus we can simulate an approximate time
-series of fluctuations as follows.
+\tau}) / (2 a)$ [@ibe2013].
+
+These mathematical results indicate that we simulate an approximate time
+series of fluctuations with the following simple code.
 ```{r}
 set.seed(123)
 nobs <- 1000
 ts <- numeric(nobs)
+autocor <- numeric(nobs)
+variance <- numeric(nobs)
 ts[1] <- 0
 beta <- 0.5
 gamma <- 1
@@ -65,23 +69,70 @@ delta_beta <- (gamma - beta) / nobs
 quadratic_formula <- function(a, b, c){
   (-b - sqrt(b^2 - 4 * a * c)) / (2 * a)
 }
-for (t in seq(2, nobs)){
+for (t in seq(1, nobs)){
   beta <- beta + delta_beta
   I <- quadratic_formula(-beta, beta - eta - gamma, eta)
   a <- -(beta - 2 * beta * I - eta - gamma)
   b <- sqrt(beta * I * (1 - I) + eta * (1 - I) + gamma * I)
   tau <- 1
   phi <- exp(-a * tau)
-  sigma <- (1 - exp(-a * 2 * tau)) * b ^ 2 / (2 * a)
-  ts[t] <- phi * ts[t - 1] + sigma * rnorm(1)
+  var <- b ^ 2 / (2 * a)
+  sigma <- (1 - exp(-a * 2 * tau)) * var
+  if (t == 1) {
+    ts[t] <- 0
+  } else {
+    ts[t] <- phi * ts[t - 1] + sigma * rnorm(1)
+  }
+  autocor[t] <- phi
+  variance[t] <- var
 }
 ```
+
 It is clear that many statistic would change if evaluated along rolling windows of this time series.
 ```{r}
 plot(ts, xlab="time", ylab="fluctuation, z", type="l")
 ```
+In fact, we have calculated the expected autocorrelation and variance while doing the simulation and can plot them.
+```{r}
+par(mfrow=c(1,2))
+plot(variance, xlab="time", ylab="Expected variance", type="l")
+plot(autocor, xlab="time", ylab="Expected lag-1 autocorrelation", type="l")
+par(mfrow=c(1,1))
+```
+In our simulation, $\beta$ was slowing increased and we stopped
+shortly before the epidemic threshold for it was crossed. These
+plots illustrate typical patterns in variance and
+autocorrelation as a critical transition is being approached. The
+\texttt{get\_dynamic\_acf} function of the spaero package is designed to
+estimate these statistics from time series.
 
-This paragraph explains how the moving windows work.
+Two key parameters the user must determine for
+\texttt{get\_dynamic\_acf} are the shape and size of the rolling
+window. There is a rolling window for an estimate of the mean and for
+an estimate of the autocovariance function. Arguments controlling
+these windows are prefixed with the "center_" and "acf_"
+respectively. We do not need to worry about estimating the mean for
+our simulated data because we have simulated deviations around the
+mean. In general, one might have to estimate the mean and subtract it
+from the time series in order to properly estimate the autocovariance
+function. That could be acheived by setting the "center_trend"
+argument to something other than "assume_zero". Regarding the shapes
+of windows, a rectangualar window function and a Gaussian-shaped
+function are available by providing either "uniform" or "gaussian" to
+the kernel arguments. The rectangular function may be preferred for
+ease of interpretation while the Gaussian function may be preferred
+for obtaining a smoother series of estimates. The width of the window
+is controlled by the bandwidth arguments. For a window centered on a
+particular index, the absolute difference between that index and all
+other indices in the time series is divided by the bandwidth to
+determine a distance to all other observations. This distance is then
+plugged into a kernel function corresponding to the window type. For
+the Guassian window, the kernel function is a Gaussian probability
+density function with a standard deviation of one. For the rectangular
+window, the kernel function equals one if the distance is less than
+one and zero otherwise. The output of the kernel function is a weight
+for each observation. These weights are used in the estimators
+described next.
 
 This paragraph explains how the covariance is estimated.
 
