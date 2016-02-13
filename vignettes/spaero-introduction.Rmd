@@ -169,6 +169,7 @@ biased.
 
 Now let's use see how our estimates compare to the expected values.
 ```{r}
+library(spaero)
 plot(autocor, type='l', xlab='time', ylab='lag-1 autocorrelation', ylim=c(0.4, 1))
 ans <- get_dynamic_acf(x=ts, center_trend="assume_zero", lag=1, acf_bandwidth=100)
 points(seq(2, length(ts)), ans$acf$smooth)
