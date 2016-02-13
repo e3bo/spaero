@@ -17,7 +17,7 @@ the data is approaching a critical transition. Examples of critical
 transitions include the eutrophication of lakes, changes in climate,
 and emergence or eradication of infectious diseases. The spearo
 package will be further developed to further support statistical
-methods to predict critical transititions in infectious disease
+methods to predict critical transitions in infectious disease
 systems. Because these methods will be based on generic properties of
 dynamical systems, they have the potential to apply to a broad range
 of models. The spaero package will also be developed to support
@@ -95,8 +95,8 @@ plot(ts, xlab="time", ylab="fluctuation, z", type="l")
 In fact, we have calculated the expected autocorrelation and variance while doing the simulation and can plot them.
 ```{r}
 par(mfrow=c(1,2))
-plot(variance, xlab="time", ylab="Expected variance", type="l")
-plot(autocor, xlab="time", ylab="Expected lag-1 autocorrelation", type="l")
+plot(variance, xlab="time", ylab="expected variance", type="l")
+plot(autocor, xlab="time", ylab="expected lag-1 autocorrelation", type="l")
 par(mfrow=c(1,1))
 ```
 In our simulation, $\beta$ was slowing increased and we stopped
@@ -115,9 +115,9 @@ respectively. We do not need to worry about estimating the mean for
 our simulated data because we have simulated deviations around the
 mean. In general, one might have to estimate the mean and subtract it
 from the time series in order to properly estimate the autocovariance
-function. That could be acheived by setting the "center_trend"
+function. That could be achieved by setting the "center_trend"
 argument to something other than "assume_zero". Regarding the shapes
-of windows, a rectangualar window function and a Gaussian-shaped
+of windows, a rectangular window function and a Gaussian-shaped
 function are available by providing either "uniform" or "gaussian" to
 the kernel arguments. The rectangular function may be preferred for
 ease of interpretation while the Gaussian function may be preferred
@@ -134,8 +134,75 @@ one and zero otherwise. The output of the kernel function is a weight
 for each observation. These weights are used in the estimators
 described next.
 
-This paragraph explains how the covariance is estimated.
+By default, \texttt{get\_dynamic\_acf} estimates the autocovariance and mean using
+weighted averages. To elaborate, the estimate of $\hat{y}_i$ for the moving window
+centered on index $i$ is
+\begin{equation}
+\hat{y}_i = \sum_j w_{ij}
+y_j / N_i,
+\end{equation}
+where $w_{ij}$ is a kernel weight, $y_j$ is a
+single-observation estimate, and $N_i = \sum_j w_{ij}$ is a
+normalization constant. For estimating the mean for detrending, the
+single-observation estimate is simply the value of the time series at
+index $i$, $z_i$. For estimating the autocovariance, the single
+observation estimate is $y_i = z_i z_{i - \textrm{lag}}$. Thus the
+first possible windows estimate occurs at the index that is one
+greater than the lag. Note that by setting the "lag" argument to 0, we can
+estimate the regular variance. \texttt{get\_dynamic\_acf} estimates the
+autocorrelation by estimating the variance in this way for each
+index. Autocovariance estimates for each window are divided by these
+variance estimates to provide an estimate of the autocorrelation. The
+autocorrelation is estimated in this way by default but once can get
+estimates of the autocovariance by setting the acf argument to
+"covariance".
 
-This paragraph explains shows how the estimates compare to theoretical expections.
+In some cases, users may obtain less biased estimates by setting the
+"acf_trend" argument to "local_linear". This replaces the weighted
+average estimate with one based on a local linear regression. This can
+reduce bias near the ends of the time series when most of the nearby
+single-observation estimates are on average below or above that of the
+focal observation. In other words, at the end of the time series, the
+window function can only look in one direction, and, if there's a
+trend in the statistic you're estimating, a weighted average will be
+biased.
+
+Now let's use see how our estimates compare to the expected values.
+```{r}
+plot(autocor, type='l', xlab='time', ylab='lag-1 autocorrelation', ylim=c(0.4, 1))
+ans <- get_dynamic_acf(x=ts, center_trend="assume_zero", lag=1, acf_bandwidth=100)
+points(seq(2, length(ts)), ans$acf$smooth)
+ans <- get_dynamic_acf(x=ts, center_trend="assume_zero", lag=1, acf_bandwidth=800)
+points(seq(2, length(ts)), ans$acf$smooth, col="red")
+```
+
+We obtain a good estimate of the trend in the autocorrelation only if the bandwidth is set properly. 
+Let's look at the effect of window shape.
+```{r}
+plot(autocor, type='l', xlab='time', ylab='lag-1 autocorrelation', ylim=c(0.4, 1))
+ans <- get_dynamic_acf(x=ts, center_trend="assume_zero", lag=1, acf_bandwidth=100)
+points(seq(2, length(ts)), ans$acf$smooth)
+ans <- get_dynamic_acf(x=ts, center_trend="assume_zero", lag=1, acf_kernel="gaussian",
+                       acf_bandwidth=100)
+points(seq(2, length(ts)), ans$acf$smooth, col="red")
+```
+
+As expected, the Guassian window leads to smoother estimate of the autocorrelation over time.
+Now let's turn to the variance.
+```{r}
+plot(variance, type='l', xlab='time', ylab='variance', log='y', ylim=c(1e-7, max=0.6))
+ans <- get_dynamic_acf(x=ts, center_trend="assume_zero", lag=0, acf_kernel="gaussian",
+                       acf_bandwidth=100, acf="covariance")
+points(ans$acf$smooth)
+```
+
+Although the estimates fall well below the expected value, the
+increasing trend in the variance as the critical transition is
+approached is still picked up.
+
+\begin{center}
+\textsc{To be continued \ldots}
+\end{center}
+
 
 ## References
