@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: rmarkdown::pdf_document
 bibliography: ews.bib
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Getting Started with spaero}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -61,7 +61,6 @@ nobs <- 1000
 ts <- numeric(nobs)
 autocor <- numeric(nobs)
 variance <- numeric(nobs)
-ts[1] <- 0
 beta <- 0.5
 gamma <- 1
 eta <- 1e-4
@@ -77,7 +76,7 @@ for (t in seq(1, nobs)){
   tau <- 1
   phi <- exp(-a * tau)
   var <- b ^ 2 / (2 * a)
-  sigma <- (1 - exp(-a * 2 * tau)) * var
+  sigma <- sqrt((1 - exp(-a * 2 * tau)) * var)
   if (t == 1) {
     ts[t] <- 0
   } else {
@@ -88,11 +87,14 @@ for (t in seq(1, nobs)){
 }
 ```
 
-It is clear that many statistic would change if evaluated along rolling windows of this time series.
+It is clear that many statistic would change if evaluated along
+rolling windows of this time series.
 ```{r}
 plot(ts, xlab="time", ylab="fluctuation, z", type="l")
 ```
-In fact, we have calculated the expected autocorrelation and variance while doing the simulation and can plot them.
+
+In fact, we have calculated the expected autocorrelation and variance
+while doing the simulation and can plot them.
 ```{r}
 par(mfrow=c(1,2))
 plot(variance, xlab="time", ylab="expected variance", type="l")
@@ -134,28 +136,27 @@ one and zero otherwise. The output of the kernel function is a weight
 for each observation. These weights are used in the estimators
 described next.
 
-By default, \texttt{get\_dynamic\_acf} estimates the autocovariance and mean using
-weighted averages. To elaborate, the estimate of $\hat{y}_i$ for the moving window
-centered on index $i$ is
+By default, \texttt{get\_dynamic\_acf} estimates the autocovariance
+and mean using weighted averages. To elaborate, the estimate of
+$\hat{y}_i$ for the moving window centered on index $i$ is
 \begin{equation}
 \hat{y}_i = \sum_j w_{ij}
 y_j / N_i,
 \end{equation}
-where $w_{ij}$ is a kernel weight, $y_j$ is a
-single-observation estimate, and $N_i = \sum_j w_{ij}$ is a
-normalization constant. For estimating the mean for detrending, the
-single-observation estimate is simply the value of the time series at
-index $i$, $z_i$. For estimating the autocovariance, the single
-observation estimate is $y_i = z_i z_{i - \textrm{lag}}$. Thus the
-first possible windows estimate occurs at the index that is one
-greater than the lag. Note that by setting the "lag" argument to 0, we can
-estimate the regular variance. \texttt{get\_dynamic\_acf} estimates the
-autocorrelation by estimating the variance in this way for each
-index. Autocovariance estimates for each window are divided by these
-variance estimates to provide an estimate of the autocorrelation. The
-autocorrelation is estimated in this way by default but once can get
-estimates of the autocovariance by setting the acf argument to
-"covariance".
+where $w_{ij}$ is a kernel weight, $y_j$ is a single-observation
+estimate, and $N_i = \sum_j w_{ij}$ is a normalization constant. For
+estimating the mean for detrending, the single-observation estimate is
+simply the value of the time series at index $i$, $z_i$. For
+estimating the autocovariance, the single observation estimate is $y_i
+= z_i z_{i - \textrm{lag}}$. Thus the first possible windows estimate
+occurs at the index that is one greater than the lag. Note that by
+setting the "lag" argument to 0, we can estimate the regular
+variance. \texttt{get\_dynamic\_acf} estimates the autocorrelation by
+estimating the variance in this way for each index. Autocovariance
+estimates for each window are divided by these variance estimates to
+provide an estimate of the autocorrelation. The autocorrelation is
+estimated in this way by default but one can get estimates of the
+autocovariance by setting the acf argument to "covariance".
 
 In some cases, users may obtain less biased estimates by setting the
 "acf_trend" argument to "local_linear". This replaces the weighted
@@ -177,8 +178,9 @@ ans <- get_dynamic_acf(x=ts, center_trend="assume_zero", lag=1, acf_bandwidth=80
 points(seq(2, length(ts)), ans$acf$smooth, col="red")
 ```
 
-We obtain a good estimate of the trend in the autocorrelation only if the bandwidth is set properly. 
-Let's look at the effect of window shape.
+We obtain a good estimate of the trend in the autocorrelation only if
+the bandwidth is set properly.  Let's look at the effect of window
+shape.
 ```{r}
 plot(autocor, type='l', xlab='time', ylab='lag-1 autocorrelation', ylim=c(0.4, 1))
 ans <- get_dynamic_acf(x=ts, center_trend="assume_zero", lag=1, acf_bandwidth=100)
@@ -188,18 +190,21 @@ ans <- get_dynamic_acf(x=ts, center_trend="assume_zero", lag=1, acf_kernel="gaus
 points(seq(2, length(ts)), ans$acf$smooth, col="red")
 ```
 
-As expected, the Guassian window leads to smoother estimate of the autocorrelation over time.
-Now let's turn to the variance.
+As expected, the Guassian window leads to smoother estimate of the
+autocorrelation over time.  Now let's turn to the variance.
 ```{r}
-plot(variance, type='l', xlab='time', ylab='variance', log='y', ylim=c(1e-7, max=0.6))
+plot(variance, type='l', xlab='time', ylab='variance')
 ans <- get_dynamic_acf(x=ts, center_trend="assume_zero", lag=0, acf_kernel="gaussian",
                        acf_bandwidth=100, acf="covariance")
 points(ans$acf$smooth)
+ans <- get_dynamic_acf(x=ts, center_trend="assume_zero", lag=0, acf_kernel="gaussian",
+                       acf_bandwidth=100, acf="covariance", acf_trend="local_linear")
+points(ans$acf$smooth, col=2)
 ```
 
-Although the estimates fall well below the expected value, the
-increasing trend in the variance as the critical transition is
-approached is still picked up.
+Both estimates have some difficulty matching the rapid rise in the
+variance toward the end of the time series, but the local linear
+regression does do better here than a weighted average.
 
 \begin{center}
 \textsc{To be continued \ldots}
