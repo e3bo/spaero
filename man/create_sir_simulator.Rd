@@ -28,7 +28,7 @@ See the vignette "Getting started with spaero" for a description of
 the model. The "params" argument must include all model
 parameters. These will become the default parameters for the model
 object. They can be overriden when the simulation is run via the
-"params" argument of \code{pomp::simulate}. The cases is the same
+"params" argument of \code{pomp::simulate}. The case is the same
 for the "times" argument.
 }
 \examples{
