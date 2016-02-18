@@ -206,6 +206,59 @@ Both estimates have some difficulty matching the rapid rise in the
 variance toward the end of the time series, but the local linear
 regression does do better here than a weighted average.
 
+## SIR model
+
+To the end of supporting computer experiments to characterize the
+statistical properties of early warning signals, the spaero package
+has a function to create a stochastic simulator of the
+susceptible--infective--removed (SIR) model. This model is also
+discussed in @keeling2008. The simulator currently is capable of
+including cyclic variation in the transmission rate as well as a
+gradual population growth that can push the model over the epidemic
+threshold. This simulation realizes a continuous time Markov chain
+according to Gillespie's direct method. Transitions between states
+occurs according to the rules given in Table~\ref{trules}, which makes
+use of the symbols defined in Table~\ref{tsymb}.
+\begin{table}[h]
+  \caption{Transition rules for our stochastic SIR model}
+  \label{trules}
+\begin{tabular}{lll}
+\hline{Event}&{($\Delta S, \Delta I, \Delta R$)}&{Rate}\\\hline
+birth of a susceptible & $(1,0,0)$ & $ \begin{cases} N_0 \mu, t < t_1\\
+[N_0 + \alpha (t - t_1)] \mu, \mathrm{otherwise}
+\end{cases} $\\
+death of a susceptible & $(-1,0,0)$ & $S \mu$\\
+infection & $(-1,1,0)$ & $   $\\
+death of an infective & $(0,-1,0)$ & $I \mu$\\
+recovery of an infective & $(0,-1)$ & $R \gamma$\\
+death of a removed & $(0,0,-1)$ & $R \mu$\\
+\hline
+\end{tabular}
+\end{table}
+\begin{table}[h]
+  \caption{Model symbol definitions}
+  \label{tsymb}
+  \begin{tabular}{lll}
+    \hline{Symbol}&{Definition}\\\hline
+    $\eta$ & rate of infection from outside of population (i.e., sparking rate) \\
+    $\beta_0$ & rate of transmission from within population contacts \\
+	$\beta_1$ & parameter controlling the amplitude of seasonal variation in within-population transmission \\
+	$p$ & period of sinusoidal component of transmission rate \\
+    $\mu$ & death rate \\
+    $S$ & number of susceptible individuals \\
+    $I$ & number of infective individuals \\
+    $R$ & number of removed individuals \\
+    $N$ & total population size, $S + I + R$ \\
+	$N_0$ & initial value of population size \\
+	$\alpha$ & rate of change in birth rate after $t_1$ \\
+	$t$ & time \\
+	$t_1$ & time at which birth rate starts increasing \\
+    \hline
+  \end{tabular}
+\end{table}
+
+
+
 \begin{center}
 \textsc{To be continued \ldots}
 \end{center}
