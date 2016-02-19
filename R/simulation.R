@@ -102,7 +102,10 @@ create_sir_simulator <- function(times=seq(0, 9),
 ##' that the expected value of the basic reproduction number crosses
 ##' one from below at a later given time point. It does this by
 ##' setting the transmission rate, beta, and the rate of change of the
-##' birth rate, alpha, accordingly.
+##' birth rate, alpha, accordingly. It uses a zeroth order
+##' approximation that will not be accurate when the rate of change in
+##' the population growth rate occurs on the same time scale as the
+##' population dynamics.
 ##'
 ##' @param t_crit the time at which the the expected value of the
 ##' basic reproduction number should equal 1
