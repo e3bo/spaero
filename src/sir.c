@@ -22,9 +22,9 @@
 #define POPN      (x[stateindex[3]]) // population size
 #define CASE      (x[stateindex[4]]) // number of cases (accumulated per reporting period)
 
-double _sir_rates (int j, double t, double *x, double *p,
-		   int *stateindex, int *parindex, int *covindex,
-		   int ncovar, double *covar) {
+double _transition_rates (int j, double t, double *x, double *p,
+		          int *stateindex, int *parindex, int *covindex,
+		          int ncovar, double *covar) {
   double beta;
   double rate = 0.0;
 

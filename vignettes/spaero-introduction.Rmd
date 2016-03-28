@@ -272,7 +272,7 @@ to a user-supplied parameter, $\rho$.
 
 With the model defined, let's look at how to run it.
 ```{r}
-sim <- create_sir_simulator()
+sim <- create_simulator()
 sim <- pomp::simulate(sim)
 ```
 We've just created a new pomp object that has the simulation results
