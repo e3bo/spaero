@@ -2,5 +2,5 @@
 
 export(create_pop_growth_params)
 export(create_simulator)
-export(get_dynamic_acf)
+export(get_stats)
 useDynLib(spaero)
