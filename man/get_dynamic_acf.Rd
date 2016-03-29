@@ -46,7 +46,7 @@ of the index of \code{x} and does not account for the frequency of
 A list with elements '"centered"' and '"acf"'. '"centered"'
 is a list of the detrend time series, the trend subtracted, and the
 bandwidth used in the detrending. '"acf"' is a list of the smoothed
-estimate of the acf and the bandwidth used. If no bandwidth were
+estimate of the acf and the bandwidth used. If no bandwidths were
 used they will be NULL.
 }
 \description{

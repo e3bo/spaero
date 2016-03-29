@@ -206,6 +206,103 @@ Both estimates have some difficulty matching the rapid rise in the
 variance toward the end of the time series, but the local linear
 regression does do better here than a weighted average.
 
+## SIR model
+
+To support computer experiments designed to characterize the
+statistical properties of early warning signals, the spaero package
+has a function to create a stochastic simulator of the
+susceptible--infective--removed (SIR) model. This model is also
+discussed in @keeling2008. The simulator currently is capable of
+including cyclic variation in the transmission rate as well as a
+population growth that can push the model over the epidemic
+threshold. This simulation realizes a continuous time Markov chain
+according to Gillespie's direct method. Transitions between states
+occurs according to the rules given in Table~\ref{trules}, which makes
+use of the symbols defined in Table~\ref{tsymb}. Note that because the
+some of the rates depend on time and because the rates are only
+updated when a reaction event occurs in the Gillespie algorithm, these
+simulations are not in general exact. However, if births and deaths
+are frequently occuring the rates should be updated frequently enough
+for the simulation to be accurate enough for many uses.
+\begin{table}[h]
+  \caption{Transition rules for our stochastic SIR model}
+  \label{trules}
+\begin{tabular}{lll}
+\hline{Event}&{($\Delta S, \Delta I, \Delta R$)}&{Rate}\\\hline
+birth of a susceptible & $(1,0,0)$ & $\begin{cases} N_0 \mu, \qquad\qquad\qquad\qquad \mathrm{if}\, t < t_1,\\
+[N_0 + \alpha (t - t_1)] \mu, \qquad \mathrm{otherwise} \end{cases}$\\
+death of a susceptible & $(-1,0,0)$ & $S \mu$\\
+infection & $(-1,1,0)$ & $[\beta_0 (1 + \beta_1 \sin( 2 t / p)) I + \eta ] S$\\
+death of an infective & $(0,-1,0)$ & $I \mu$\\
+recovery of an infective & $(0,-1,1)$ & $R \gamma$\\
+death of a removed & $(0,0,-1)$ & $R \mu$\\
+\hline
+\end{tabular}
+\end{table}
+\begin{table}[h]
+  \caption{Model symbol definitions}
+  \label{tsymb}
+  \begin{tabular}{lll}
+    \hline{Symbol}&{Definition}\\\hline
+    $\eta$ & rate of infection from outside of population (i.e., sparking rate) \\
+    $\beta_0$ & rate of transmission from within population contacts \\
+	$\beta_1$ & parameter controlling the amplitude of seasonal variation in within-population transmission \\
+	$p$ & period of sinusoidal component of transmission rate \\
+    $\mu$ & death rate \\
+    $S$ & number of susceptible individuals \\
+    $I$ & number of infective individuals \\
+    $R$ & number of removed individuals \\
+    $N$ & total population size, $S + I + R$ \\
+	$N_0$ & initial value of population size \\
+	$\alpha$ & rate of change in birth rate after $t_1$ \\
+	$t$ & time \\
+	$t_1$ & time at which birth rate starts increasing \\
+    \hline
+  \end{tabular}
+\end{table}
+
+In addition to simulating the dynamics of disease spread, the pomp
+object also simulates imperfect observation of the dynamics. A cases
+variable is included in the output and it counts the total number of
+recoveries that occured in the preceding interval between
+observations. A corresponding number of reports is simulated by
+sampling from a binomial probability mass function with a number of
+trials equal to the number of cases and a reporting probability equal
+to a user-supplied parameter, $\rho$.
+
+With the model defined, let's look at how to run it.
+```{r}
+sim <- create_simulator()
+sim <- pomp::simulate(sim)
+```
+We've just created a new pomp object that has the simulation results
+stored inside of it. They can be extracted like so:
+```{r}
+as(sim, "data.frame")
+```
+
+Observation times and parameters can be set at simulation run time:
+
+```{r}
+pars <- sim@params
+pars["rho"] <- 0.5
+sim <- pomp::simulate(sim, params=pars, times=seq(1, 4))
+as(sim, "data.frame")
+```
+
+One can also set the number of replicates.
+```{r}
+sims <- pomp::simulate(sim, nsim=2, times=seq(1, 2))
+lapply(sims, as, "data.frame")
+```
+
+The random number seed allows simulations to be reproduced.
+```{r}
+as(pomp::simulate(sim, seed=342), "data.frame")
+as(pomp::simulate(sim, seed=342), "data.frame")
+```
+
+
 \begin{center}
 \textsc{To be continued \ldots}
 \end{center}
