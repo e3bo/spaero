@@ -100,9 +100,10 @@ get_stats <- function(x, center_trend="grand_mean", center_kernel="gaussian",
                                    cortype="correlation", lag=lag)
   stats$autocorrelation <- stats$autocorrelation$smooth
   stats$correlation_time <- lag / stats$autocorrelation
-  stats$variance <- autocor(centered$x, trend=stat_trend, kernel=stat_kernel,
-                            bandwidth=stat_bandwidth, cortype="covariance",
-                            lag=0)
+  stats$variance <- get_noncentral_moments(centered$x, trend=stat_trend,
+                                           kernel=stat_kernel,
+                                           bandwidth=stat_bandwidth,
+                                           moment_number=2)
   stats$variance <- stats$var$smooth
   stats$mean <- centered$center
   stats$index_of_dispersion <- stats$var / stats$mean
