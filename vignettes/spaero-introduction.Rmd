@@ -172,10 +172,10 @@ Now let's use see how our estimates compare to the expected values.
 ```{r}
 library(spaero)
 plot(autocor, type='l', xlab='time', ylab='lag-1 autocorrelation', ylim=c(0.4, 1))
-ans <- get_dynamic_acf(x=ts, center_trend="assume_zero", lag=1, acf_bandwidth=100)
-points(seq(2, length(ts)), ans$acf$smooth)
-ans <- get_dynamic_acf(x=ts, center_trend="assume_zero", lag=1, acf_bandwidth=800)
-points(seq(2, length(ts)), ans$acf$smooth, col="red")
+ans <- get_stats(x=ts, center_trend="assume_zero", lag=1, stat_bandwidth=100)
+points(seq(2, length(ts)), ans$stat$autocorr)
+ans <- get_stats(x=ts, center_trend="assume_zero", lag=1, stat_bandwidth=800)
+points(seq(2, length(ts)), ans$stat$autocorr, col="red")
 ```
 
 We obtain a good estimate of the trend in the autocorrelation only if
@@ -183,23 +183,21 @@ the bandwidth is set properly.  Let's look at the effect of window
 shape.
 ```{r}
 plot(autocor, type='l', xlab='time', ylab='lag-1 autocorrelation', ylim=c(0.4, 1))
-ans <- get_dynamic_acf(x=ts, center_trend="assume_zero", lag=1, acf_bandwidth=100)
-points(seq(2, length(ts)), ans$acf$smooth)
-ans <- get_dynamic_acf(x=ts, center_trend="assume_zero", lag=1, acf_kernel="gaussian",
-                       acf_bandwidth=100)
-points(seq(2, length(ts)), ans$acf$smooth, col="red")
+ans <- get_stats(x=ts, center_trend="assume_zero", lag=1, stat_bandwidth=100)
+points(seq(2, length(ts)), ans$stat$autocor)
+ans <- get_stats(x=ts, center_trend="assume_zero", lag=1, stat_kernel="gaussian",
+                       stat_bandwidth=100)
+points(seq(2, length(ts)), ans$stat$autocor, col="red")
 ```
 
 As expected, the Guassian window leads to smoother estimate of the
 autocorrelation over time.  Now let's turn to the variance.
 ```{r}
 plot(variance, type='l', xlab='time', ylab='variance')
-ans <- get_dynamic_acf(x=ts, center_trend="assume_zero", lag=0, acf_kernel="gaussian",
-                       acf_bandwidth=100, acf="covariance")
-points(ans$acf$smooth)
-ans <- get_dynamic_acf(x=ts, center_trend="assume_zero", lag=0, acf_kernel="gaussian",
-                       acf_bandwidth=100, acf="covariance", acf_trend="local_linear")
-points(ans$acf$smooth, col=2)
+points(ans$stat$variance)
+ans <- get_stats(x=ts, center_trend="assume_zero", stat_kernel="gaussian",
+                stat_bandwidth=100, stat_trend="local_linear")
+points(ans$stat$variance, col=2)
 ```
 
 Both estimates have some difficulty matching the rapid rise in the
@@ -286,22 +284,19 @@ Observation times and parameters can be set at simulation run time:
 ```{r}
 pars <- sim@params
 pars["rho"] <- 0.5
-sim <- pomp::simulate(sim, params=pars, times=seq(1, 4))
-as(sim, "data.frame")
+pomp::simulate(sim, params=pars, times=seq(1, 4), as.data.frame=TRUE)
 ```
 
 One can also set the number of replicates.
 ```{r}
-sims <- pomp::simulate(sim, nsim=2, times=seq(1, 2))
-lapply(sims, as, "data.frame")
+pomp::simulate(sim, nsim=2, times=seq(1, 2), as.data.frame=TRUE)
 ```
 
 The random number seed allows simulations to be reproduced.
 ```{r}
-as(pomp::simulate(sim, seed=342), "data.frame")
-as(pomp::simulate(sim, seed=342), "data.frame")
+pomp::simulate(sim, seed=342, as.data.frame=TRUE)
+pomp::simulate(sim, seed=342, as.data.frame=TRUE)
 ```
-
 
 \begin{center}
 \textsc{To be continued \ldots}

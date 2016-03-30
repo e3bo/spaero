@@ -1,8 +1,7 @@
-
-#' Get dynamic autocorrelation function.
+#' Get estimates of time-dependent statistics.
 #'
-#' \code{get_dynamic_acf} estimates time-dependent autocorrelation
-#' function from ensemble time series.
+#' \code{get_stats} estimates time-dependent statistics from ensemble
+#' time series.
 #'
 #' Any missing values in 'x' will cause an error.
 #'
@@ -35,48 +34,50 @@
 #' local detrending. Allowed values are '"gaussian"' and '"uniform"'.
 #' @param center_bandwidth Bandwith of kernel for any local detrending
 #' done. A numeric value >= 1.
-#' @param acf_trend Character string giving method of smoothed
-#' acf. Allowed values are '"local_constant"', and
+#' @param stat_trend Character string giving method of smoothing
+#' statistics estimated. Allowed values are '"local_constant"', and
 #' '"local_linear"'. Will be partially matched.
-#' @param acf_kernel Character string giving the kernel for local
-#' smoothing of acf. Allowed values are '"gaussian"' and '"uniform"'.
-#' @param acf_bandwidth Bandwith of kernel for any local smoothing of
-#' acf done. A numeric value >= 1.
-#' @param acf Character string giving the type of acf to be
-#' returned. Allowed values are '"correlation"' (the default), and
-#' '"covariance"'. Will be partially matched.
+#' @param stat_kernel Character string giving the kernel for local
+#' smoothing of estimated statistics. Allowed values are '"gaussian"' and '"uniform"'.
+#' @param stat_bandwidth Bandwith of kernel for local smoothing of statistics.
+#' A numeric value >= 1.
 #' @param lag Integer lag at which to calculate the acf. This lag is in terms
 #' of the index of \code{x} and does not account for the frequency of
 #' \code{x} if \code{x} is a time series. It should be positive.
-#' @return A list with elements '"centered"' and '"acf"'. '"centered"'
-#' is a list of the detrend time series, the trend subtracted, and the
-#' bandwidth used in the detrending. '"acf"' is a list of the smoothed
-#' estimate of the acf and the bandwidth used. If no bandwidths were
-#' used they will be NULL.
+#' @return A list with elements '"stats"', '"centered"',
+#' '"stat_trend"', '"stat_kernel"', '"stat_bandwidth"', and
+#' '"lag"'. "stats" is a list containg vectors of the estimated
+#' statistics. '"centered"' is a list of the detrend time series, the
+#' trend subtracted, and the bandwidth used in the detrending. The
+#' other elements record the parameters provided to this function for
+#' future reference.
 #'
-#' @seealso \code{\link{acf}} for regular autcorrelation estimation
+#' @seealso \code{\link{acf}}, \code{\link{var}},
+#' \code{\link[moments]{kurtosis}}, and
+#' \code{\link[moments]{skewness}} for estimation of statistics that
+#' are not time-dependent.
 #' @export
 #' @examples
 #'
 #' # A highly autocorrelated time series
 #' x <- 1:10
-#' get_dynamic_acf(x, acf_bandwidth=3)
+#' get_stats(x, stat_bandwidth=3)$stats
 #'
 #' # Plot log of acf
-#' plot(log(get_dynamic_acf(x, acf_bandwidth=3)$acf$smooth))
+#' plot(log(get_stats(x, stat_bandwidth=3)$stats$autoc))
 #'
 #' # Check estimates with AR1 simulations with lag-1 core 0.1
 #' w <- rnorm(1000)
 #' xnext <- function(xlast, w) 0.1 * xlast + w
 #' x <- Reduce(xnext, x=w, init=0, accumulate=TRUE)
 #' acf(x, lag.max=1, plot=FALSE)
-#' head(get_dynamic_acf(x, acf_bandwidth=length(x))$acf$smooth)
+#' head(get_stats(x, stat_bandwidth=length(x))$stats$autoc)
 #'
 #' # Check detrending ability
 #' x2 <- x + seq(1, 10, len=length(x))
-#' ans <- get_dynamic_acf(x2, center_trend="local_linear",
-#'                        center_bandwidth=length(x), acf_bandwidth=length(x))
-#' head(ans$acf$smooth)
+#' ans <- get_stats(x2, center_trend="local_linear",
+#'                        center_bandwidth=length(x), stat_bandwidth=length(x))$stats
+#' head(ans$autoc)
 #'
 #' # The simple acf estimate is inflated by the trend
 #' acf(x2, lag.max=1, plot=FALSE)
@@ -87,18 +88,37 @@
 #' acf(xhi, lag.max=1, plot=FALSE)
 #' wt <- seq(0, 1, len=length(x))
 #' xdynamic <- wt * xhi + (1 - wt) * x
-#' get_dynamic_acf(xdynamic, acf_bandwidth=100)$acf$smooth
-get_dynamic_acf <- function(x, center_trend="grand_mean",
-                            center_kernel="gaussian",
-                            center_bandwidth=NULL,
-                            acf_trend="local_constant",
-                            acf_kernel="uniform", acf_bandwidth=NULL,
-                            acf="correlation", lag=1){
+#' get_stats(xdynamic, stat_bandwidth=100)$stats$autocor
+get_stats <- function(x, center_trend="grand_mean", center_kernel="gaussian",
+                      center_bandwidth=NULL, stat_trend="local_constant",
+                      stat_kernel="uniform", stat_bandwidth=NULL, lag=1){
   centered <- detrend(x, trend=center_trend, kernel=center_kernel,
                       bandwidth=center_bandwidth)
-  acf <- autocor(centered$x, trend=acf_trend, acf_kernel,
-                 bandwidth=acf_bandwidth, cortype=acf, lag=lag)
-  list(centered=centered, acf=acf)
+  stats <- list()
+  stats$autocorrelation <- autocor(centered$x, trend=stat_trend,
+                                   kernel=stat_kernel, bandwidth=stat_bandwidth,
+                                   cortype="correlation", lag=lag)
+  stats$autocorrelation <- stats$autocorrelation$smooth
+  stats$correlation_time <- lag / -log(stats$autocorrelation)
+  stats$variance <- get_noncentral_moments(centered$x, trend=stat_trend,
+                                           kernel=stat_kernel,
+                                           bandwidth=stat_bandwidth,
+                                           moment_number=2)
+  stats$variance <- stats$variance$smooth
+  stats$mean <- centered$center
+  stats$index_of_dispersion <- stats$var / stats$mean
+  stats$coefficient_of_variation <- sqrt(stats$var) / stats$mean
+  stats$skewness <- get_noncentral_moments(centered$x, trend=stat_trend,
+                                         bandwidth=stat_bandwidth,
+                                         kernel=stat_kernel, moment_number=3)
+  stats$skewness <- stats$skewness$smooth / stats$variance ^ (3 / 2)
+  stats$kurtosis <- get_noncentral_moments(centered$x, trend=stat_trend,
+                                         bandwidth=stat_bandwidth,
+                                         kernel=stat_kernel, moment_number=4)
+  stats$kurtosis <- stats$kurtosis$smooth / stats$variance ^ 2
+  ret <- list(stats=stats, centered=centered, stat_trend=stat_trend,
+              stat_kernel=stat_kernel, stat_bandwidth=stat_bandwidth, lag=lag)
+  ret
 }
 
 detrend <- function(x, trend=c("grand_mean", "ensemble_means",
@@ -188,12 +208,29 @@ autocor <- function(x, cortype=c("correlation", "covariance"), lag=1,
   xx_lag_sm <- smooth(data=data, bandwidth=bandwidth, kernel=kernel, est=trend)
   if (cortype == "correlation") {
     xx <- rowMeans(x1 * x1) * 0.5 + rowMeans(x2 * x2) * 0.5
-    data <- data.frame(step=step, rmn= xx)
+    data <- data.frame(step=step, rmn=xx)
     xx_sm <- smooth(data=data, bandwidth=bandwidth, kernel=kernel, est=trend)
     ret <- list(smooth=xx_lag_sm$smooth / xx_sm$smooth,
                 bandwidth=xx_sm$bandwidth)
   } else {
     ret <- xx_lag_sm
   }
+  ret$smooth <- c(rep(NA, lag), ret$smooth)
   ret
+}
+
+get_noncentral_moments <- function(x, moment_number=3, bandwidth=NULL,
+                                   trend=c("local_constant", "local_linear"),
+                                   kernel=c("gaussian", "uniform")){
+  trend <- match.arg(trend)
+  kernel <- match.arg(kernel)
+  x <- na.fail(x)
+  x <- as.matrix(x)
+  if (!is.numeric(x)) stop("'x' must be numeric")
+  if (moment_number < 1) stop("'moment_number' must be >= 1")
+
+  xpow <- rowMeans(x ^ moment_number)
+  step <- seq_along(xpow)
+  data <- data.frame(step=step, rmn=xpow)
+  smooth(data=data, bandwidth=bandwidth, kernel=kernel, est=trend)
 }
