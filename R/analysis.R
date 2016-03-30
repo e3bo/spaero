@@ -99,7 +99,7 @@ get_stats <- function(x, center_trend="grand_mean", center_kernel="gaussian",
                                    kernel=stat_kernel, bandwidth=stat_bandwidth,
                                    cortype="correlation", lag=lag)
   stats$autocorrelation <- stats$autocorrelation$smooth
-  stats$correlation_time <- lag / stats$autocorrelation
+  stats$correlation_time <- lag / -log(stats$autocorrelation)
   stats$variance <- get_noncentral_moments(centered$x, trend=stat_trend,
                                            kernel=stat_kernel,
                                            bandwidth=stat_bandwidth,
