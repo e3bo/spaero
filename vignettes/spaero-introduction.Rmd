@@ -25,239 +25,77 @@ computational experiments designed to evaluate these methods. This
 document provides a rudimentary demonstration of such methods on
 simulated data.
 
-We will sample a time series from a linear noise approximation to an
-SIS (Susceptible--Infected--Susceptible) epidemic model. See
-@keeling2008 for an introduction to this model. The linear noise
-approximation is highly accurate for a large population, is easy to
-simulate from, and leads to simple expected values of the statistics
-we will estimate. The scaled fluctuations $z(t)$ of the number
-infected around its expected value follow the stochastic differential
-equation
-\begin{equation}
-\mathrm{d} z(t) = -az(t)\mathrm{d}t + b\mathrm{d}B(t),
-\end{equation}
-where where $B(t)$ is a standard Brownian motion and
-\begin{align}
-a &= -(\beta - 2 \beta I - \eta - \gamma), \\
-b &= \sqrt{\beta I (1 - I) + \eta (1 - I) + \gamma I},
-\end{align}
-are functions of the SIS model parameters [@oregan2013, eq. 14]. These
-parameters are $\beta$, the transmission rate; $\eta$, the rate of
-infection from outside of the population; $\gamma$, the recovery
-rate. $I$ is the expected fraction of infected individuals. $I$
-satisfies $0 = \beta I (1 - I) + \eta (1 - I) - \gamma I$ when the
-parameters are constant. If the parameters are changing at some small
-rate $\epsilon \ll 1$, $I$ still remains close to that solution
-[@kuehn2015]. By integrating over some time unit $\tau$, we find that
-$z(t + \tau | z(t))$ is normally distributed with a mean of $z(t)
-\mathrm{e}^{- a \tau}$ and a variance of $b^2 (1 - \mathrm{e}^{-2a
-\tau}) / (2 a)$ [@ibe2013].
-
-These mathematical results indicate that we simulate an approximate time
-series of fluctuations with the following simple code.
-```{r}
-set.seed(123)
-nobs <- 1000
-ts <- numeric(nobs)
-autocor <- numeric(nobs)
-variance <- numeric(nobs)
-beta <- 0.5
-gamma <- 1
-eta <- 1e-4
-delta_beta <- (gamma - beta) / nobs
-quadratic_formula <- function(a, b, c){
-  (-b - sqrt(b^2 - 4 * a * c)) / (2 * a)
-}
-for (t in seq(1, nobs)){
-  beta <- beta + delta_beta
-  I <- quadratic_formula(-beta, beta - eta - gamma, eta)
-  a <- -(beta - 2 * beta * I - eta - gamma)
-  b <- sqrt(beta * I * (1 - I) + eta * (1 - I) + gamma * I)
-  tau <- 1
-  phi <- exp(-a * tau)
-  var <- b ^ 2 / (2 * a)
-  sigma <- sqrt((1 - exp(-a * 2 * tau)) * var)
-  if (t == 1) {
-    ts[t] <- 0
-  } else {
-    ts[t] <- phi * ts[t - 1] + sigma * rnorm(1)
-  }
-  autocor[t] <- phi
-  variance[t] <- var
-}
-```
-
-It is clear that many statistic would change if evaluated along
-rolling windows of this time series.
-```{r}
-plot(ts, xlab="time", ylab="fluctuation, z", type="l")
-```
-
-In fact, we have calculated the expected autocorrelation and variance
-while doing the simulation and can plot them.
-```{r}
-par(mfrow=c(1,2))
-plot(variance, xlab="time", ylab="expected variance", type="l")
-plot(autocor, xlab="time", ylab="expected lag-1 autocorrelation", type="l")
-par(mfrow=c(1,1))
-```
-In our simulation, $\beta$ was slowing increased and we stopped
-shortly before the epidemic threshold for it was crossed. These
-plots illustrate typical patterns in variance and
-autocorrelation as a critical transition is being approached. The
-\texttt{get\_dynamic\_acf} function of the spaero package is designed to
-estimate these statistics from time series.
-
-Two key parameters the user must determine for
-\texttt{get\_dynamic\_acf} are the shape and size of the rolling
-window. There is a rolling window for an estimate of the mean and for
-an estimate of the autocovariance function. Arguments controlling
-these windows are prefixed with the "center_" and "acf_"
-respectively. We do not need to worry about estimating the mean for
-our simulated data because we have simulated deviations around the
-mean. In general, one might have to estimate the mean and subtract it
-from the time series in order to properly estimate the autocovariance
-function. That could be achieved by setting the "center_trend"
-argument to something other than "assume_zero". Regarding the shapes
-of windows, a rectangular window function and a Gaussian-shaped
-function are available by providing either "uniform" or "gaussian" to
-the kernel arguments. The rectangular function may be preferred for
-ease of interpretation while the Gaussian function may be preferred
-for obtaining a smoother series of estimates. The width of the window
-is controlled by the bandwidth arguments. For a window centered on a
-particular index, the absolute difference between that index and all
-other indices in the time series is divided by the bandwidth to
-determine a distance to all other observations. This distance is then
-plugged into a kernel function corresponding to the window type. For
-the Guassian window, the kernel function is a Gaussian probability
-density function with a standard deviation of one. For the rectangular
-window, the kernel function equals one if the distance is less than
-one and zero otherwise. The output of the kernel function is a weight
-for each observation. These weights are used in the estimators
-described next.
-
-By default, \texttt{get\_dynamic\_acf} estimates the autocovariance
-and mean using weighted averages. To elaborate, the estimate of
-$\hat{y}_i$ for the moving window centered on index $i$ is
-\begin{equation}
-\hat{y}_i = \sum_j w_{ij}
-y_j / N_i,
-\end{equation}
-where $w_{ij}$ is a kernel weight, $y_j$ is a single-observation
-estimate, and $N_i = \sum_j w_{ij}$ is a normalization constant. For
-estimating the mean for detrending, the single-observation estimate is
-simply the value of the time series at index $i$, $z_i$. For
-estimating the autocovariance, the single observation estimate is $y_i
-= z_i z_{i - \textrm{lag}}$. Thus the first possible windows estimate
-occurs at the index that is one greater than the lag. Note that by
-setting the "lag" argument to 0, we can estimate the regular
-variance. \texttt{get\_dynamic\_acf} estimates the autocorrelation by
-estimating the variance in this way for each index. Autocovariance
-estimates for each window are divided by these variance estimates to
-provide an estimate of the autocorrelation. The autocorrelation is
-estimated in this way by default but one can get estimates of the
-autocovariance by setting the acf argument to "covariance".
-
-In some cases, users may obtain less biased estimates by setting the
-"acf_trend" argument to "local_linear". This replaces the weighted
-average estimate with one based on a local linear regression. This can
-reduce bias near the ends of the time series when most of the nearby
-single-observation estimates are on average below or above that of the
-focal observation. In other words, at the end of the time series, the
-window function can only look in one direction, and, if there's a
-trend in the statistic you're estimating, a weighted average will be
-biased.
-
-Now let's use see how our estimates compare to the expected values.
-```{r}
-library(spaero)
-plot(autocor, type='l', xlab='time', ylab='lag-1 autocorrelation', ylim=c(0.4, 1))
-ans <- get_stats(x=ts, center_trend="assume_zero", lag=1, stat_bandwidth=100)
-points(seq(2, length(ts)), ans$stat$autocorr)
-ans <- get_stats(x=ts, center_trend="assume_zero", lag=1, stat_bandwidth=800)
-points(seq(2, length(ts)), ans$stat$autocorr, col="red")
-```
-
-We obtain a good estimate of the trend in the autocorrelation only if
-the bandwidth is set properly.  Let's look at the effect of window
-shape.
-```{r}
-plot(autocor, type='l', xlab='time', ylab='lag-1 autocorrelation', ylim=c(0.4, 1))
-ans <- get_stats(x=ts, center_trend="assume_zero", lag=1, stat_bandwidth=100)
-points(seq(2, length(ts)), ans$stat$autocor)
-ans <- get_stats(x=ts, center_trend="assume_zero", lag=1, stat_kernel="gaussian",
-                       stat_bandwidth=100)
-points(seq(2, length(ts)), ans$stat$autocor, col="red")
-```
-
-As expected, the Guassian window leads to smoother estimate of the
-autocorrelation over time.  Now let's turn to the variance.
-```{r}
-plot(variance, type='l', xlab='time', ylab='variance')
-points(ans$stat$variance)
-ans <- get_stats(x=ts, center_trend="assume_zero", stat_kernel="gaussian",
-                stat_bandwidth=100, stat_trend="local_linear")
-points(ans$stat$variance, col=2)
-```
-
-Both estimates have some difficulty matching the rapid rise in the
-variance toward the end of the time series, but the local linear
-regression does do better here than a weighted average.
-
-## SIR model
-
-To support computer experiments designed to characterize the
-statistical properties of early warning signals, the spaero package
-has a function to create a stochastic simulator of the
-susceptible--infective--removed (SIR) model. This model is also
-discussed in @keeling2008. The simulator currently is capable of
-including cyclic variation in the transmission rate as well as a
+Our simulated data is a time series produced by a stochastic SIR
+simulator included in the spaero package. See @keeling2008 for an
+introduction to the SIR model. The simulator currently is capable of
+including cyclic variation in the transmission rate as well as
 population growth that can push the model over the epidemic
-threshold. This simulation realizes a continuous time Markov chain
-according to Gillespie's direct method. Transitions between states
-occurs according to the rules given in Table~\ref{trules}, which makes
-use of the symbols defined in Table~\ref{tsymb}. Note that because the
-some of the rates depend on time and because the rates are only
-updated when a reaction event occurs in the Gillespie algorithm, these
-simulations are not in general exact. However, if births and deaths
-are frequently occuring the rates should be updated frequently enough
-for the simulation to be accurate enough for many uses.
-\begin{table}[h]
-  \caption{Transition rules for our stochastic SIR model}
-  \label{trules}
-\begin{tabular}{lll}
-\hline{Event}&{($\Delta S, \Delta I, \Delta R$)}&{Rate}\\\hline
-birth of a susceptible & $(1,0,0)$ & $\begin{cases} N_0 \mu, \qquad\qquad\qquad\qquad \mathrm{if}\, t < t_1,\\
-[N_0 + \alpha (t - t_1)] \mu, \qquad \mathrm{otherwise} \end{cases}$\\
-death of a susceptible & $(-1,0,0)$ & $S \mu$\\
-infection & $(-1,1,0)$ & $[\beta_0 (1 + \beta_1 \sin( 2 t / p)) I + \eta ] S$\\
+threshold. Gillespie's direct method is used to update the model
+variables during the simulation. Transitions between states occurs
+according to the rules given in Table~\ref{trules}, which makes use of
+the symbols defined in Table~\ref{tsymb}. Because some of the
+transition rates change continuously with time and because the direct
+method algorithm updates the rates only at points of time when the
+model's state variables are updated, these simulations are not in
+general exact. However, for many realistic scenarios birth and death
+updates occur frequently enough that the simulation should be highly
+accurate.
+\begin{table}[h] \caption{Transition rules for our stochastic SIR
+model} \label{trules}
+\begin{tabular}{lll} \hline{Event}&{($\Delta S,\Delta I, \Delta R$)}&{Rate}\\
+\hline birth of a susceptible & $(1,0,0)$ & $\begin{cases} N_0 \mu, \qquad\qquad\qquad\qquad\mathrm{if}\, t < t_1,\\ [N_0 + \alpha (t - t_1)] \mu, \qquad
+\mathrm{otherwise} \end{cases}$\\
+death of a susceptible & $(-1,0,0)$& $S \mu$\\ infection & $(-1,1,0)$ & $[\beta_0 (1 + \beta_1 \sin( 2 t / p)) I + \eta ] S$\\
 death of an infective & $(0,-1,0)$ & $I \mu$\\
-recovery of an infective & $(0,-1,1)$ & $R \gamma$\\
+recovery of an infective & $(0,-1,1)$ & $I \gamma$\\
 death of a removed & $(0,0,-1)$ & $R \mu$\\
+\hline \end{tabular} \end{table}
+\begin{table}[h] \caption{Modelsymbol definitions} \label{tsymb}
+\begin{tabular}{lll}
 \hline
-\end{tabular}
-\end{table}
-\begin{table}[h]
-  \caption{Model symbol definitions}
-  \label{tsymb}
-  \begin{tabular}{lll}
-    \hline{Symbol}&{Definition}\\\hline
-    $\eta$ & rate of infection from outside of population (i.e., sparking rate) \\
-    $\beta_0$ & rate of transmission from within population contacts \\
-	$\beta_1$ & parameter controlling the amplitude of seasonal variation in within-population transmission \\
-	$p$ & period of sinusoidal component of transmission rate \\
-    $\mu$ & death rate \\
-    $S$ & number of susceptible individuals \\
-    $I$ & number of infective individuals \\
-    $R$ & number of removed individuals \\
-    $N$ & total population size, $S + I + R$ \\
-	$N_0$ & initial value of population size \\
-	$\alpha$ & rate of change in birth rate after $t_1$ \\
-	$t$ & time \\
-	$t_1$ & time at which birth rate starts increasing \\
-    \hline
-  \end{tabular}
-\end{table}
+{Symbol}&{Definition}\\
+\hline
+$\eta$ & rate of infection from outside of population (i.e., sparking rate) \\
+$\beta_0$ & rate of transmission from within population contacts \\
+$\beta_1$ & parameter controlling the amplitude of seasonal variation in within-population transmission \\
+$p$ & period of sinusoidal component of transmission rate \\
+$\mu$ & death rate \\
+$S$ & number of susceptible individuals\\
+$I$ & number of infective individuals \\
+$R$ & number of removed individuals \\
+$N$ & total population size, $S + I + R$ \\
+$N_0$ & initial value of population size \\
+$\alpha$ & rate of change in birth rate after $t_1$ \\
+$t$ & time \\
+$t_1$ & time at which birth rate starts increasing \\
+\hline \end{tabular} \end{table}
+
+Before demonstrating the statistical analysis functions of spearo, we
+provide an overview of the simulation functions. These functions
+essentially provide a convenient interface to the general simulation
+capabilities of the pomp package. The user calls the
+create_simulator() function to create an object of class pomp. This
+object contains the model structure as well as default parameters for
+the simulation. Simulations of the model may then be run using the
+simulate method in the pomp package:
+```{r}
+sim <- create_simulator()
+simout <- pomp::simulate(sim)
+```
+
+This code creates a new pomp object and runs a simulation with the
+default parameters.  The variable simout contians a second pomp object
+that contains the simulation results. These results may be extracted
+like so:
+```{r}
+as(simout, "data.frame")
+```
+
+Alternatively, one can run the simulator like this to output the
+results as a data frame.
+```[r]
+simout <- pomp::simulate(sim, as.data.frame=TRUE)
+```
 
 In addition to simulating the dynamics of disease spread, the pomp
 object also simulates imperfect observation of the dynamics. A cases
@@ -268,19 +106,7 @@ sampling from a binomial probability mass function with a number of
 trials equal to the number of cases and a reporting probability equal
 to a user-supplied parameter, $\rho$.
 
-With the model defined, let's look at how to run it.
-```{r}
-sim <- create_simulator()
-sim <- pomp::simulate(sim)
-```
-We've just created a new pomp object that has the simulation results
-stored inside of it. They can be extracted like so:
-```{r}
-as(sim, "data.frame")
-```
-
 Observation times and parameters can be set at simulation run time:
-
 ```{r}
 pars <- sim@params
 pars["rho"] <- 0.5
@@ -296,6 +122,14 @@ The random number seed allows simulations to be reproduced.
 ```{r}
 pomp::simulate(sim, seed=342, as.data.frame=TRUE)
 pomp::simulate(sim, seed=342, as.data.frame=TRUE)
+```
+
+An SIS model is also available. This model is identical to the SIR
+model except that the recovery event in Table~\ref{trules} results in an
+infective individual becoming a susceptible.
+```{r}
+sim_sis <- create_simulator(process_model="SIS")
+pomp::simulate(sim_sis, as.data.frame=TRUE)
 ```
 
 \begin{center}
