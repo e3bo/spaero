@@ -104,26 +104,24 @@ test_that("large bandwidth autocor estimates agree with acf", {
   x <- Reduce(xnext, x=w, init=0, accumulate=TRUE)
 
   stats_est <- stats::acf(x, lag.max=1, plot=FALSE)$acf[2, 1, 1]
-  spaero_est <- autocor(x, bandwidth=length(x) * 10)$smooth[1]
+  spaero_est <- autocor(x, bandwidth=length(x) * 10)$smooth[2]
   expect_equal(stats_est, spaero_est, tolerance=0.05)
 
   stats_est <- stats::acf(x, lag.max=1, plot=FALSE,
                           type="covariance")$acf[2, 1, 1]
   spaero_est <- autocor(x, bandwidth=length(x) * 10,
-                        cortype="covariance")$smooth[1]
+                        cortype="covariance")$smooth[2]
   expect_equal(stats_est, spaero_est, tolerance=0.05)
 
   xnext <- function(xlast, w) 0.9 * xlast + w
   x <- Reduce(xnext, x=w, init=0, accumulate=TRUE)
 
   stats_est <- stats::acf(x, lag.max=1, plot=FALSE)$acf[2, 1, 1]
-  spaero_est <- autocor(x, bandwidth=length(x) * 10)$smooth[1]
+  spaero_est <- autocor(x, bandwidth=length(x) * 10)$smooth[2]
   expect_equal(stats_est, spaero_est, tolerance=0.05)
-
-
 })
 
-context("expected use of get_dynamic_acf")
+context("expected use of get_stats")
 
 test_that("estimate of time-dependent autocorrelation consistent", {
   make_time_dependent_updater <- function(f) {
@@ -148,17 +146,17 @@ test_that("estimate of time-dependent autocorrelation consistent", {
     init <- rnorm(n=1, sd=sqrt(1.15))
     x[, i] <- Reduce(updater, x=w, init=init, accumulate=TRUE)
   }
-  est <- get_dynamic_acf(x, center_trend="assume_zero", acf_bandwidth=3)
-  lambda_ests <- log(est$acf$smooth)
+  est <- get_stats(x, center_trend="assume_zero", stat_bandwidth=3)
+  lambda_ests <- log(est$stats$autocorrelation[-1])
   lambda_known <- seq(from=-1, by=0.01, len=nobs - 1)
   error <- lambda_ests - lambda_known
   expect_lt(sqrt(mean(error ^ 2)), 0.05)
 
   trend <- sin(2 * pi * (1:nobs) / nobs)
   xx <- x + trend
-  est <- get_dynamic_acf(xx, center_trend="local_constant", center_bandwidth=3,
-                         acf_bandwidth=3)
-  lambda_ests <- log(est$acf$smooth)
+  est <- get_stats(xx, center_trend="local_constant", center_bandwidth=3,
+                   stat_bandwidth=3)
+  lambda_ests <- log(est$stats$autocorrelation[-1])
   error <- lambda_ests - lambda_known
   expect_lt(sqrt(mean(error ^ 2)), 0.05)
 })
