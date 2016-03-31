@@ -13,11 +13,13 @@
 #'
 #' @return A pomp object with which simulations can be run via \code{pomp::simulate}.
 #' @param times a numeric vector of increasing times at which the
-#' state of the simulation will be sampled. The first time is the one
-#' at which the simulation will start.
+#' state of the simulation will be sampled.
+#' @param t0 The at which the simulation is started with state
+#' variable set to the initial conditions specified via params.
 #' @param process_model Character string giving the process
 #' model. Allowed values are '"SIR"' and '"SIS"'.
-#' @param params a named numeric vector of parameter values.
+#' @param params a named numeric vector of parameter values and
+#' initial conditions.
 #'
 #' @seealso \code{\link[pomp]{pomp}} for documentation of pomp objects
 #' @useDynLib spaero
@@ -42,11 +44,14 @@
 #' plot(out$cases, repn)
 #' par(opar)
 #'
-create_simulator <- function(times=seq(0, 9), process_model=c("SIR", "SIS"),
-                             params=c(gamma=24, mu=1 / 70, eta=1e-4,
-                                 beta0=9.6e-5, beta1=0, period=1, t1=100,
-                                 alpha=100, rho=0.1, S_0=0.99, I_0=1e-4,
-                                 R_0=0, N_0=1e5)) {
+create_simulator <- function(times=seq(0, 9), t0=min(times),
+                             process_model=c("SIR", "SIS"),
+                             params=c(gamma=24, mu=1 / 70, d=1 / 70, eta=1e-5,
+                                 beta=1e-4, rho=0.1, S_0=1, I_0=0, R_0=0,
+                                 N_0=1e5),
+                             covar=data.frame(gamma_t=c(0, 0), mu_t=c(0, 0),
+                                 d_t=c(0, 0), eta_t=c(0, 0), beta_t=c(0, 0),
+                                 time=c(0, 1e6))) {
   process_model <- match.arg(process_model)
   if (!requireNamespace("pomp", quietly = TRUE)) {
     stop(paste("The pomp package is needed for this function to work.",
@@ -54,13 +59,12 @@ create_simulator <- function(times=seq(0, 9), process_model=c("SIR", "SIS"),
          call. = FALSE)
   }
   data <- data.frame(time=times, reports=NA)
-  t0 <- min(times)
   d <- cbind(birth=c(1,1,1,1,0),
-             sdeath=c(1,0,0,0,0),
+             sdeath=c(1,1,1,1,0),
              infection=c(1,1,1,1,0),
-             ideath=c(0,1,0,0,0),
-             recovery=c(0,1,0,0,0),
-             rdeath=c(0,0,1,0,0))
+             ideath=c(1,1,1,1,0),
+             recovery=c(1,1,1,1,0),
+             rdeath=c(1,1,1,1,0))
   if (process_model == "SIR") {
     v <- cbind(birth=c(1,0,0,1,0),
                sdeath=c(-1,0,0,-1,0),
@@ -85,25 +89,23 @@ create_simulator <- function(times=seq(0, 9), process_model=c("SIR", "SIS"),
     fracs <- params[ic.names]
     x0["N"] <- params["N_0"]
     x0[comp.names] <- round(params["N_0"] * fracs / sum(fracs))
-    if(params["beta1"] < 0 | params["beta1"] > 1){
-      stop("beta1 must be in [0, 1]")
-    }
     if(params["rho"] < 0 | params["rho"] > 1) {
       stop("rho must be in [0, 1]")
     }
-    pos.names <- c("gamma", "mu", "eta", "beta0", "period", "alpha",
+    pos.names <- c("gamma", "mu", "d", "eta", "beta",
                    "S_0", "I_0", "R_0", "N_0")
     if(any(params[pos.names] < 0)) {
-      stop(paste("All", paste(pos.names, collapse=" "), "should be > 0."))
+      stop(paste("All", paste(pos.names, collapse=" "), "should be >= 0."))
     }
     x0
   }
   pomp::pomp(data=data, times="time", t0=t0, params=params, rprocess=rprocess,
              measurement.model=reports~binom(size=cases, prob=rho),
-             statenames=c("S", "I", "R", "N", "cases"),
-             paramnames=c("gamma", "mu", "eta", "beta0", "beta1", "period",
-                          "t1", "alpha", "rho", "S_0", "I_0", "R_0", "N_0"),
-             zeronames=c("cases"), initializer=initializer)
+             covar=covar, statenames=c("S", "I", "R", "N", "cases"),
+             paramnames=c("gamma", "mu", "d", "eta", "beta", "rho", "S_0",
+                 "I_0", "R_0", "N_0"),
+             covarnames=c("gamma_t", "mu_t", "d_t", "eta_t", "beta_t"),
+             tcovar="time", zeronames="cases", initializer=initializer)
 }
 
 #' Create population growth parameters.

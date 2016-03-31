@@ -3,24 +3,27 @@
 #include <Rinternals.h>
 
 #define GAMMA       (p[parindex[0]]) // recovery rate
-#define MU          (p[parindex[1]]) // death rate
-#define ETA         (p[parindex[2]]) // import rate
-#define BETA0       (p[parindex[3]]) // baseline transmission rate
-#define BETA1       (p[parindex[4]]) // amplitude of seasonal cycle in transmission rate
-#define PERIOD      (p[parindex[5]]) // period of seasonal cycle in transmission rate
-#define T1          (p[parindex[6]]) // time at which pop size starts to grow
-#define ALPHA       (p[parindex[7]]) // expected change in population per unit time after tbase
-#define RHO         (p[parindex[8]]) // reporting probability
-#define S0          (p[parindex[9]]) // initial fraction of S
-#define I0          (p[parindex[10]]) // initial fraction of I
-#define R0          (p[parindex[11]]) // initial fraction of R
-#define N0          (p[parindex[12]]) // population size
+#define MU          (p[parindex[1]]) // birth rate
+#define D           (p[parindex[2]]) // death rate
+#define ETA         (p[parindex[3]]) // sparking rate
+#define BETA        (p[parindex[4]]) // transmission rate
+#define RHO         (p[parindex[5]]) // reporting probability
+#define S0          (p[parindex[6]]) // initial fraction of S
+#define I0          (p[parindex[7]]) // initial fraction of I
+#define R0          (p[parindex[8]]) // initial fraction of R
+#define N0          (p[parindex[9]]) // initial population size
 
-#define SUSC      (x[stateindex[0]]) // number of susceptibles
-#define INFD      (x[stateindex[1]]) // number of infectives
-#define RCVD      (x[stateindex[2]]) // number of recovereds
-#define POPN      (x[stateindex[3]]) // population size
-#define CASE      (x[stateindex[4]]) // number of cases (accumulated per reporting period)
+#define GAMMA_T     (covar[covindex[0]]) // recovery rate
+#define MU_T        (covar[covindex[1]]) // birth rate
+#define D_T         (covar[covindex[2]]) // death rate
+#define ETA_T       (covar[covindex[3]]) // sparking rate
+#define BETA_T      (covar[covindex[4]]) // transmission rate
+
+#define SUSC        (x[stateindex[0]]) // number of susceptibles
+#define INFD        (x[stateindex[1]]) // number of infectives
+#define RCVD        (x[stateindex[2]]) // number of recovereds
+#define POPN        (x[stateindex[3]]) // population size
+#define CASE        (x[stateindex[4]]) // number of cases (accumulated per reporting period)
 
 double _transition_rates (int j, double t, double *x, double *p,
 		          int *stateindex, int *parindex, int *covindex,
@@ -30,24 +33,22 @@ double _transition_rates (int j, double t, double *x, double *p,
 
   switch (j) {
   case 1: 			// birth
-    rate = N0 * MU;
-    if (t > T1) rate += ALPHA * (t - T1) * MU;
+    rate = N0 * (MU + MU_T);
     break;
   case 2:			// susceptible death
-    rate = MU*SUSC;
+    rate = SUSC * (D + D_T);
     break;
   case 3:			// infection
-    beta = BETA0 * (1 + BETA1 * sinpi ( 2 * t / PERIOD));
-    rate = (beta * INFD + ETA) * SUSC;
+    rate = ((BETA + BETA_T) * INFD + (ETA + ETA_T)) * SUSC;
     break;
   case 4:			// infected death
-    rate = MU*INFD;
+    rate = INFD * (D + D_T);
     break;
   case 5:			// recovery
-    rate = GAMMA*INFD;
+    rate = INFD * (GAMMA + GAMMA_T);
     break;
   case 6:			// recovered death
-    rate = MU*RCVD;
+    rate = RCVD * (D + D_T);
     break;
   default:
     error("unrecognized rate code %d",j);
