@@ -4,23 +4,31 @@
 \alias{create_simulator}
 \title{Create surveillance data simulator.}
 \usage{
-create_simulator(times = seq(0, 9), process_model = c("SIR", "SIS"),
-  params = c(gamma = 24, mu = 1/70, eta = 1e-04, beta0 = 9.6e-05, beta1 = 0,
-  period = 1, t1 = 100, alpha = 100, rho = 0.1, S_0 = 0.99, I_0 = 1e-04, R_0 =
-  0, N_0 = 1e+05))
+create_simulator(times = seq(0, 9), t0 = min(times),
+  process_model = c("SIR", "SIS"), params = c(gamma = 24, mu = 1/70, d =
+  1/70, eta = 1e-05, beta = 1e-04, rho = 0.1, S_0 = 1, I_0 = 0, R_0 = 0, N_0 =
+  1e+05), covar = data.frame(gamma_t = c(0, 0), mu_t = c(0, 0), d_t = c(0, 0),
+  eta_t = c(0, 0), beta_t = c(0, 0), time = c(0, 1e+06)))
 }
 \arguments{
-\item{times}{a numeric vector of increasing times at which the
-state of the simulation will be sampled. The first time is the one
-at which the simulation will start.}
+\item{times}{A numeric vector of increasing times at which the
+state of the simulation will be sampled.}
+
+\item{t0}{The time at which the simulation is started with state
+variable set to the initial conditions specified via params.}
 
 \item{process_model}{Character string giving the process
 model. Allowed values are '"SIR"' and '"SIS"'.}
 
-\item{params}{a named numeric vector of parameter values.}
+\item{params}{A named numeric vector of parameter values and
+initial conditions.}
+
+\item{covar}{A data frame containing values of the time-dependent
+components of the parameters.}
 }
 \value{
-A pomp object with which simulations can be run via \code{pomp::simulate}.
+A pomp object with which simulations can be run via
+\code{pomp::simulate}.
 }
 \description{
 \code{create_simulator} creates a pomp object that will run
@@ -33,26 +41,23 @@ the model. The "params" argument must include all model
 parameters. These will become the default parameters for the model
 object. They can be overriden when the simulation is run via the
 "params" argument of \code{pomp::simulate}. The case is the same
-for the "times" argument.
+for the "times" argument. The "covar" argument should be a data
+frame with a column named for each of the time-dependent parameters
+and a column named time. This data frame describes the time series
+of each of the time-dependent parameters. In the simulation,
+interpolation based on this data frame determines the value of
+these parameters at specific instants in time.
 }
 \examples{
 
-# See strong seasonal forcing
 foo <- create_simulator()
-params <- c(gamma=24, mu=0.01, eta=10e-06, beta0=11e-06, beta1=.99,
-            period=1, t1=10, alpha=0, rho=0.1, S_0=0.9974, I_0=0,
-            R_0=1 - .9974, N_0=1e+06)
-out <- pomp::simulate(foo, times=seq(0, 20, by=1/26), params=params)
+out <- pomp::simulate(foo, times=seq(0, 20, by=1/26))
 out <- as(out, "data.frame")
+head(out)
 
-opar <- par(mfrow=c(4, 1))
+opar <- par(mfrow=c(2, 1))
 plot((S/N)~time, data=out, type="l")
 plot(cases~time, data=out, type="l")
-repn <- params["beta0"] * out$N / (params["mu"] + params["gamma"])
-repn <- repn * (1 + params["beta1"] *
-                      sinpi (2 * out$time / params["period"]))
-plot(out$time, repn, type='l')
-plot(out$cases, repn)
 par(opar)
 
 }
