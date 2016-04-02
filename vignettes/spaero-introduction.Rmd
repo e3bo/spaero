@@ -64,7 +64,6 @@ $S$ & number of susceptible individuals\\
 $I$ & number of infective individuals \\
 $R$ & number of removed individuals \\
 $N$ & total population size, $S + I + R$ \\
-$N_0$ & initial value of population size \\
 \hline \end{tabular} \end{table}
 
 Before demonstrating the statistical analysis functions of spearo, we
@@ -202,37 +201,34 @@ from those of \texttt{generic\_ews}.
 
 By default, \texttt{get\_stats} estimates statistics via weighted
 sample moments. To clarify, the estimate of the moment for the moving
-window centered on index $i$ is \begin{equation} m_i(f_j(x)) = \sum_j
-w_{ij} f_j(x) / N_i, \end{equation} where $w_{ij}$ is a kernel weight,
-$f_j(x)$ is the value of the moment at index $j$, and $N_i = \sum_j
-w_{ij}$ is a normalization constant. Table~\ref{tstats} provides the
-formulas for the statistics estimated in terms of these moment
-estimates.  In some cases, users may obtain less biased estimates by
-setting the "stat_trend" argument to "local_linear". This replaces the
-weighted average estimate with a prediction from a local linear
+window centered on index $i$ of the time series $x$ is
+\begin{equation} m_i(f_j(x)) = \sum_j w_{ij} f_j(x) / N_i,
+\end{equation} where $w_{ij}$ is a kernel weight, $f_j(x)$ is the
+value of the moment at index $j$, and $N_i = \sum_j w_{ij}$ is a
+normalization constant. Table~\ref{tstats} provides the formulas for
+the statistics estimated in terms of these moment estimates.  In some
+cases, users may obtain less biased estimates by setting the
+"stat_trend" argument to "local_linear". This replaces the weighted
+average estimate with a prediction from a local linear
 regression. This method can reduce bias near the ends of the time
 series if a trend exists such that $f_j(x)$ for $j$ near $i$ tend to
 be above or below the expected value of $f_i(x)$ across repeated
-realizations of a time series.
-\begin{table}[h]
-\caption{Formulas for statistics at windows in terms of moment estimates.}
-\label{tstats}
-\begin{tabular}{ll}
-\hline
-Statistic & Formula\\
-\hline
-$\textrm{mean}_i$ & $m_i(x_j)$  \\
-$\textrm{variance}_i$ & $m_i(x_j^2)$ \\
-$\textrm{autocovariance}_i$ & $m_i(x_j x_{j - \textrm{lag}})$ \\
-$\textrm{autocorrelation}_i$ & $\textrm{autocovariance}_i  / \textrm{variance}_i$ \\
-$(\textrm{decay time})_i$ & $-\textrm{lag} / (\log \min(\max(\textrm{autocorrelation}_i, 0), 1)$) \\
-$(\textrm{index of dispersion})_i$ & $\textrm{variance}_i / \textrm{mean}_i$ \\
-$(\textrm{coefficient of variation})_i$ & $(\textrm{variance}_i)^{0.5} / \textrm{mean}_i$ \\
-$\textrm{skewness}_i$ & $m_i(x_j^3) / (\textrm{variance}_i)^{1.5}$ \\
-$\textrm{kurtosis}_i$ & $m_i(x_j^4) / (\textrm{variance}_i)^2$ \\
-\hline
-\end{tabular}
-\end{table}
+realizations of a time series.  \begin{table}[h] \caption{Formulas for
+statistics at windows in terms of moment estimates.}  \label{tstats}
+\begin{tabular}{ll} \hline Statistic & Formula\\ \hline
+$\textrm{mean}_i$ & $m_i(x_j)$ \\ $\textrm{variance}_i$ & $m_i((x_j -
+\textrm{mean}_j)^2)$ \\ $\textrm{autocovariance}_i$ & $m_i( (x_j -
+\textrm{mean}_j) (x_{j - \textrm{lag}} - \textrm{mean}_{j -
+\textrm{lag}})$ \\ $\textrm{autocorrelation}_i$ &
+$\textrm{autocovariance}_i / \textrm{variance}_i$ \\ $(\textrm{decay
+time})_i$ & $-\textrm{lag} / (\log
+\min(\max(\textrm{autocorrelation}_i, 0), 1)$) \\ $(\textrm{index of
+dispersion})_i$ & $\textrm{variance}_i / \textrm{mean}_i$ \\
+$(\textrm{coefficient of variation})_i$ & $(\textrm{variance}_i)^{0.5}
+/ \textrm{mean}_i$ \\ $\textrm{skewness}_i$ & $m_i((x_j -
+\textrm{mean}_j)^3) / (\textrm{variance}_i)^{1.5}$ \\
+$\textrm{kurtosis}_i$ & $m_i((x_j - \textrm{mean}_j)^4) /
+(\textrm{variance}_i)^2$ \\ \hline \end{tabular} \end{table}
 
 Let's look at the effect of changing some of these parameters on the estimated statistics.
 First we try a Gaussian window.
