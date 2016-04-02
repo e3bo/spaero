@@ -155,7 +155,8 @@ moving windows.
 ```{r}
 
 st1 <- get_stats(so[, "reports"], center_kernel="uniform",
-                center_trend="local_constant", center_bandwidth=360, stat_bandwidth=360)
+                 center_trend="local_constant", center_bandwidth=360,
+                 stat_bandwidth=360)
 plot_st <- function(st) {
   plot_vars <- ts(cbind(Residual=st$centered$x[, 1], Mean=st$stats$mean,
                   Autocorrelation=st$stats$autocor, Variance=st$stats$var,
@@ -250,7 +251,7 @@ Next, we'll increase the bandwidths.
 
 st3 <- get_stats(so[, "reports"], center_kernel="gaussian",
                  center_trend="local_constant", center_bandwidth=720,
-                 stat_bandwidth=720, stat_kernel="gaussian", stat_trend="local_constant")
+                 stat_bandwidth=720, stat_kernel="gaussian")
 plot_st(st3)
 
 ```
