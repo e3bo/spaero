@@ -136,15 +136,15 @@ transmission rate starts out well below the threshold value and
 gradually increases.
 ```{r}
 
-params <- c(gamma=24, mu=0.014, d=0.014, eta=1e-4, beta=1.9e-5,
+params <- c(gamma=24, mu=0.014, d=0.014, eta=1e-4, beta=0,
             rho=0.9, S_0=1, I_0=0, R_0=0, N_0=1e5)
 covar <- data.frame(gamma_t=c(0, 0), mu_t=c(0, 0), d_t=c(0, 0), eta_t=c(0, 0),
-                    beta_t=c(0, 24e-5 - 1.9e-5), time=c(0, 300))
-times <- seq(0, 250, by=0.25)
+                    beta_t=c(0, 24e-5), time=c(0, 300))
+times <- seq(0, 200, by=1/12)
 
 sim <- create_simulator(params=params, times=times, covar=covar)
 so <- pomp::simulate(sim, as.data.frame=TRUE, seed=272)
-plot(ts(so[, "reports"], freq=4), ylab="No. reports")
+plot(ts(so[, "reports"], freq=12), ylab="No. reports")
 
 ```
 
@@ -154,17 +154,20 @@ moving windows.
 
 ```{r}
 
-st <- get_stats(so[, "reports"], center_kernel="uniform",
-                center_trend="local_constant", center_bandwidth=40, stat_bandwidth=40)
-plot_vars <- ts(cbind(reports=so[, "reports"], mean=st$stats$mean,
-                      autocorrelation=st$stats$autocor, variance=st$stats$var,
-                      skewness=st$stats$skew, kurtosis=st$stats$kurt), freq=4)
-plot(plot_vars, main="")
+st1 <- get_stats(so[, "reports"], center_kernel="uniform",
+                center_trend="local_constant", center_bandwidth=360, stat_bandwidth=360)
+plot_st <- function(st) {
+  plot_vars <- ts(cbind(Residual=st$centered$x[, 1], Mean=st$stats$mean,
+                  Autocorrelation=st$stats$autocor, Variance=st$stats$var,
+                  Skewness=st$stats$skew, Kurtosis=st$stats$kurt), freq=12)
+  plot(plot_vars, main="")
+}
+plot_st(st1)
 
 ```
 
-The increasing trends in the variance is a potential warning signal
-that the system is approaching the epidemic threshold. Readers
+The increasing trends in the statistics are a potential warning
+signals that the system is approaching the epidemic threshold. Readers
 interested in this type of analysis can find guidelines in
 @dakos_methods_2012 and may also want to consider performing it with
 the \texttt{generic\_ews} function in the earlywarnings package
@@ -234,26 +237,21 @@ Let's look at the effect of changing some of these parameters on the estimated s
 First we try a Gaussian window.
 ```{r}
 
-st <- get_stats(so[, "reports"], center_kernel="gaussian",
-                center_trend="local_constant", center_bandwidth=40,
-                stat_bandwidth=40, stat_kernel="gaussian")
-plot_vars <- ts(cbind(reports=so[, "reports"], mean=st$stats$mean,
-                      autocorrelation=st$stats$autocor, variance=st$stats$var,
-                      skewness=st$stats$skew, kurtosis=st$stats$kurt), freq=4)
-plot(plot_vars, main="")
+st2 <- get_stats(so[, "reports"], center_kernel="gaussian",
+                 center_trend="local_constant", center_bandwidth=360,
+                 stat_bandwidth=360, stat_kernel="gaussian")
+plot_st(st2)
+
 
 ```
 
-Next, local linear models for the statistics and larger bandwidth.
+Next, we'll increase the bandwidths.
 ```{r}
 
-st <- get_stats(so[, "reports"], center_kernel="uniform",
-                center_trend="local_linear", center_bandwidth=100,
-                stat_bandwidth=100, stat_kernel="uniform", stat_trend="local_linear")
-plot_vars <- ts(cbind(reports=so[, "reports"], mean=st$stats$mean,
-                      autocorrelation=st$stats$autocor, variance=st$stats$var,
-                      skewness=st$stats$skew, kurtosis=st$stats$kurt), freq=4)
-plot(plot_vars, main="")
+st3 <- get_stats(so[, "reports"], center_kernel="gaussian",
+                 center_trend="local_constant", center_bandwidth=720,
+                 stat_bandwidth=720, stat_kernel="gaussian", stat_trend="local_constant")
+plot_st(st3)
 
 ```
 
