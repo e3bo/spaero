@@ -15,32 +15,32 @@ estimation of statistics along rolling windows of time series. Such
 estimates may in some cases provide signals that the system generating
 the data is approaching a critical transition. Examples of critical
 transitions include the eutrophication of lakes, changes in climate,
-and emergence or eradication of infectious diseases. The spearo
-package will be further developed to further support statistical
-methods to predict critical transitions in infectious disease
-systems. Because these methods will be based on generic properties of
-dynamical systems, they have the potential to apply to a broad range
-of models. The spaero package will also be developed to support
-computational experiments designed to evaluate these methods. This
-document provides a rudimentary demonstration of the application of
-such methods on simulated data.
+and the emergence or eradication of infectious diseases. The spearo
+package will be developed to further support statistical methods to
+anticipate critical transitions in infectious disease systems. Because
+these methods will be based on generic properties of dynamical
+systems, they have the potential to apply to a broad range of models.
+Spearo also provides functions to support computational experiments
+designed to evaluate these methods for applications relevant to
+infectious disease systems. This document provides a rudimentary
+demonstration of the application of such methods to simulated data.
 
 Our simulated data is a time series produced by a stochastic SIR
 simulator included in the spaero package. See @keeling2008 for an
-introduction to the SIR model. The simulator currently is capable of
-including time dependent parameters. Gillespie's direct method is used
-to update the model variables during the simulation. Transitions
-between states occurs according to the rules given in
-Table~\ref{trules}, which makes use of the symbols defined in
-Table~\ref{tsymb}. Because some of the transition rates may change
-continuously with time and because the simulation algorithm updates
-the rates only at points of time when the model's state variables are
-updated, these simulations are not in general exact. However, for many
-realistic scenarios birth and death updates occur frequently enough
-that the simulation should be highly accurate.
+introduction to the SIR model. The simulator is capable of including
+time dependent parameters. Gillespie's direct method is used to update
+the model variables during the simulation. Transitions between states
+occurs according to the rules given in Table~\ref{trules}, which makes
+use of the symbols defined in Table~\ref{tsymb}. Because some of the
+transition rates may change continuously with time and because the
+simulation algorithm updates the rates only at points of time when the
+model's state variables are updated, these simulations are not in
+general exact. However, for many realistic scenarios birth and death
+updates occur frequently enough that the simulation should be highly
+accurate.
 
-\begin{table}[h] \caption{Transition rules for our stochastic SIR
-model} \label{trules}
+\begin{table}[h] \caption{Transition rules for our stochastic SIR model}
+\label{trules}
 \begin{tabular}{lll} \hline{Event}&{($\Delta S,\Delta I, \Delta R$)}&{Rate}\\
 \hline birth of a susceptible & $(1,0,0)$ & $ \mu + \mu_t $\\
 death of a susceptible & $(-1,0,0)$& $S (d + d_t)$\\
@@ -52,7 +52,7 @@ death of a removed & $(0,0,-1)$ & $R (d + d_t)$\\
 
 \begin{table}[h] \caption{Model symbol definitions. Time-dependent rates have a $t$ subscript.}
 \label{tsymb}
-\begin{tabular}{lll}
+\begin{tabular}{ll}
 \hline
 {Symbol}&{Definition}\\
 \hline
@@ -71,7 +71,7 @@ Before demonstrating the statistical analysis functions of spearo, we
 provide an overview of the simulation functions. These functions
 essentially provide a convenient interface to the general simulation
 capabilities of the pomp package. The user calls the
-create_simulator() function to create an object of class pomp. This
+\texttt{create\_simulator} function to create an object of class \texttt{pomp}. This
 object contains the model structure as well as default parameters for
 the simulation. Simulations of the model may then be run using the
 simulate method in the pomp package:
@@ -144,7 +144,7 @@ covar <- data.frame(gamma_t=c(0, 0), mu_t=c(0, 0), d_t=c(0, 0), eta_t=c(0, 0),
 times <- seq(0, 200, by=0.25)
 
 sim <- create_simulator(params=params, times=times, covar=covar)
-so <- pomp::simulate(sim, as.data.frame=TRUE)
+so <- pomp::simulate(sim, as.data.frame=TRUE, seed=272)
 plot(ts(so[, "reports"], freq=4), ylab="No. reports")
 
 ```
@@ -158,12 +158,75 @@ moving windows.
 st <- get_stats(so[, "reports"], center_kernel="uniform",
                 center_trend="local_constant", center_bandwidth=40, stat_bandwidth=40)
 plot_vars <- ts(cbind(reports=so[, "reports"], mean=st$stats$mean,
-                      autocorrelation=st$stats$auto, variance=st$stats$var,
+                      autocorrelation=st$stats$autocor, variance=st$stats$var,
                       skewness=st$stats$skew, kurtosis=st$stats$kurt), freq=4)
 plot(plot_vars, main="")
 
 ```
 
+The increasing trends in rise in the autocorrelation and variance are
+typical of what happens before a critical transition. Readers
+interested in this type of analyis may also want to consider
+performing it with the \texttt{generic\_ews} function in the earlywarnings
+package [@dakos_methods_2012]. We'll next review the input parameters
+and implementation of get_stats and make notes of some differences
+between it and \texttt{generic\_ews}.
+
+Two key parameters that the user must provide to \texttt{get\_stats}
+are the shape and size of the rolling window. There is a rolling
+window for an estimate of the mean and for an estimate of statistics
+within the window. Arguments controlling these windows are prefixed
+with the "center_" and "stat_" respectively. An estimate of the mean
+is necessary because the calculation of the statistics involve
+deviations from the mean. \texttt{get\_stats} supports estimation of
+the mean via several methods and users may also estimate the mean
+using other methods, subtract it from the input time series, and then
+set the "center_trend" argument to "assume_zero". Regarding the shapes
+of windows, a rectangular window function and a Gaussian-shaped
+function are available by providing either "uniform" or "gaussian" to
+the kernel arguments. The rectangular function may be preferred for
+ease of interpretation while the Gaussian function may be preferred
+for obtaining a smoother series of estimates. The width of the window
+is controlled by the bandwidth arguments. For a window centered on a
+particular index, the absolute difference between that index and all
+other indices in the time series is divided by the bandwidth to
+determine a distance to all other observations. This distance is then
+plugged into a kernel function corresponding to the window type. For
+the gaussian window, the kernel function is a Gaussian probability
+density function with a standard deviation of one. For the rectangular
+window, the kernel function equals one if the distance is less than
+one and zero otherwise. The output of the kernel function is a weight
+for each observation. These weights are used in the estimators
+described next. Note that these bandwidth conventions are different
+from those of \texttt{generic\_ews}.
+
+By default, \texttt{get\_stats} estimates statistics via weighted
+sample moments. To clarify, the estimate of the moment for the
+moving window centered on index $i$ is \begin{equation} m_i(f_j(x)) =
+\sum_j w_{ij} f_j(x) / N_i, \end{equation} where $w_{ij}$ is a kernel
+weight, $f_j(x)$ is the value of the moment at index $j$, and
+$N_i = \sum_j w_{ij}$ is a normalization constant. Table~\ref{tstats}
+provides the formulas for the statistics estimated in terms of these
+moment estimates.
+\begin{table}[h]
+\caption{Formulas for statistics at windows in terms of moment estimates.}
+\label{tstats}
+\begin{tabular}{ll}
+\hline
+Statistic & Formula\\
+\hline
+$\textrm{mean}_i$ & $m_i(x_j)$  \\
+$\textrm{variance}_i$ & $m_i(x_j^2)$ \\
+$\textrm{autocovariance}_i$ & $m_i(x_j x_{j - \textrm{lag}})$ \\
+$\textrm{autocorrelation}_i$ & $\textrm{autocovariance}_i  / \textrm{variance}_i$ \\
+$\textrm{correlation time}_i$ & $-\textrm{lag} / (\log \min(\max(\textrm{autocorrelation}_i, 0), 1)$) \\
+$\textrm{index of dispersion}_i$ & $\textrm{variance}_i / \textrm{mean}_i$ \\
+$\textrm{coefficient of variation}_i$ & $(\textrm{variance}_i)^{0.5} / \textrm{mean}_i$ \\
+$\textrm{skewness}_i$ & $m_i(x_j^3) / (\textrm{variance}_i)^{1.5}$ \\
+$\textrm{kurtosis}_i$ & $m_i(x_j^4) / (\textrm{variance}_i)^2$ \\
+\hline
+\end{tabular}
+\end{table}
 
 \begin{center}
 \textsc{To be continued \ldots}

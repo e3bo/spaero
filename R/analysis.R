@@ -24,6 +24,9 @@
 #' smoothers avoid biases that the one-sided kernels at the ends of
 #' the time series can create for the local constant smoothers.
 #'
+#' See the vignette "Getting started with spaero" for the formulas
+#' used to calculate each statistic.
+#'
 #' @param x A univariate or multivariate numeric time series object or
 #' a numeric vector or matrix.
 #' @param center_trend Character string giving method of calculating
@@ -64,14 +67,14 @@
 #' get_stats(x, stat_bandwidth=3)$stats
 #'
 #' # Plot log of acf
-#' plot(log(get_stats(x, stat_bandwidth=3)$stats$autoc))
+#' plot(log(get_stats(x, stat_bandwidth=3)$stats$autocor))
 #'
 #' # Check estimates with AR1 simulations with lag-1 core 0.1
 #' w <- rnorm(1000)
 #' xnext <- function(xlast, w) 0.1 * xlast + w
 #' x <- Reduce(xnext, x=w, init=0, accumulate=TRUE)
 #' acf(x, lag.max=1, plot=FALSE)
-#' head(get_stats(x, stat_bandwidth=length(x))$stats$autoc)
+#' head(get_stats(x, stat_bandwidth=length(x))$stats$autocor)
 #'
 #' # Check detrending ability
 #' x2 <- x + seq(1, 10, len=length(x))
@@ -95,16 +98,20 @@ get_stats <- function(x, center_trend="grand_mean", center_kernel="gaussian",
   centered <- detrend(x, trend=center_trend, kernel=center_kernel,
                       bandwidth=center_bandwidth)
   stats <- list()
-  stats$autocorrelation <- autocor(centered$x, trend=stat_trend,
-                                   kernel=stat_kernel, bandwidth=stat_bandwidth,
-                                   cortype="correlation", lag=lag)
-  stats$autocorrelation <- stats$autocorrelation$smooth
-  stats$correlation_time <- lag / -log(stats$autocorrelation)
   stats$variance <- get_noncentral_moments(centered$x, trend=stat_trend,
                                            kernel=stat_kernel,
                                            bandwidth=stat_bandwidth,
                                            moment_number=2)
   stats$variance <- stats$variance$smooth
+  stats$autocovariance <- autocor(centered$x, trend=stat_trend,
+                                  kernel=stat_kernel, bandwidth=stat_bandwidth,
+                                  cortype="covariance", lag=lag)
+  stats$autocovariance <- stats$autocovariance$smooth
+  stats$autocorrelation <- stats$autocovariance / stats$variance
+  ac01 <- ifelse(0 > stats$autocorrelation, 0, stats$autocorrelation)
+  ac01 <- ifelse(1 > ac01, ac01, 1)
+  denom <- log(ac01)
+  stats$correlation_time <- -lag / denom
   stats$mean <- centered$center
   stats$index_of_dispersion <- stats$var / stats$mean
   stats$coefficient_of_variation <- sqrt(stats$var) / stats$mean
