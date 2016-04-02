@@ -111,7 +111,7 @@ get_stats <- function(x, center_trend="grand_mean", center_kernel="gaussian",
   ac01 <- ifelse(0 > stats$autocorrelation, 0, stats$autocorrelation)
   ac01 <- ifelse(1 > ac01, ac01, 1)
   denom <- log(ac01)
-  stats$correlation_time <- -lag / denom
+  stats$decay_time <- -lag / denom
   stats$mean <- centered$center
   stats$index_of_dispersion <- stats$var / stats$mean
   stats$coefficient_of_variation <- sqrt(stats$var) / stats$mean

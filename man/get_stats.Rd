@@ -71,6 +71,9 @@ kernel weights. '"local_linear"' smoothers are the fitted values of
 local linear regressions with the kernel weights. The linear
 smoothers avoid biases that the one-sided kernels at the ends of
 the time series can create for the local constant smoothers.
+
+See the vignette "Getting started with spaero" for the formulas
+used to calculate each statistic.
 }
 \examples{
 
@@ -79,14 +82,14 @@ x <- 1:10
 get_stats(x, stat_bandwidth=3)$stats
 
 # Plot log of acf
-plot(log(get_stats(x, stat_bandwidth=3)$stats$autoc))
+plot(log(get_stats(x, stat_bandwidth=3)$stats$autocor))
 
 # Check estimates with AR1 simulations with lag-1 core 0.1
 w <- rnorm(1000)
 xnext <- function(xlast, w) 0.1 * xlast + w
 x <- Reduce(xnext, x=w, init=0, accumulate=TRUE)
 acf(x, lag.max=1, plot=FALSE)
-head(get_stats(x, stat_bandwidth=length(x))$stats$autoc)
+head(get_stats(x, stat_bandwidth=length(x))$stats$autocor)
 
 # Check detrending ability
 x2 <- x + seq(1, 10, len=length(x))
