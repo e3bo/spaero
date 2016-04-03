@@ -80,7 +80,7 @@
 #' x2 <- x + seq(1, 10, len=length(x))
 #' ans <- get_stats(x2, center_trend="local_linear",
 #'                        center_bandwidth=length(x), stat_bandwidth=length(x))$stats
-#' head(ans$autoc)
+#' head(ans$autocor)
 #'
 #' # The simple acf estimate is inflated by the trend
 #' acf(x2, lag.max=1, plot=FALSE)
@@ -160,6 +160,15 @@ detrend <- function(x, trend=c("grand_mean", "ensemble_means",
   list(x=x, center=center, bandwidth=bandwidth)
 }
 
+get_wls_coefs <- function(y, x, w){
+    swx <- sum(w * x)
+    swy <- sum(w * y)
+    sw <- sum(w)
+    b <- (sum(w * x * y) - swx * swy / sw) / (sum(w * x ^ 2) - swx ^ 2 / sw )
+    a <- (sum(w * y) - b * sum(w * x)) / sw
+    c(intercept=a, slope=b)
+}
+
 smooth <- function(data, est, kernel="gaussian", bandwidth){
   if (!is.numeric(bandwidth) || length(bandwidth) > 1) {
     stop("argument \"bandwidth\" must be provided as a single numeric value")
@@ -184,8 +193,9 @@ smooth <- function(data, est, kernel="gaussian", bandwidth){
     smooth <- colSums(w * data$rmn)
   } else {
     wlm <- function(x){
-      m <- lm(rmn~step, weights=w[, x], data=data)
-      fitted(m)[x]
+      coefs <- get_wls_coefs(y=data$rmn, x=data$step, w=w[, x])
+      fitted <- data$step * coefs["slope"] + coefs["intercept"]
+      fitted[x]
     }
     smooth <- sapply(seq_along(data$step), wlm)
   }

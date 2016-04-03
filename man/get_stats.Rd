@@ -95,7 +95,7 @@ head(get_stats(x, stat_bandwidth=length(x))$stats$autocor)
 x2 <- x + seq(1, 10, len=length(x))
 ans <- get_stats(x2, center_trend="local_linear",
                        center_bandwidth=length(x), stat_bandwidth=length(x))$stats
-head(ans$autoc)
+head(ans$autocor)
 
 # The simple acf estimate is inflated by the trend
 acf(x2, lag.max=1, plot=FALSE)
