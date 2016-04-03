@@ -138,34 +138,42 @@ test_that(paste("estimate of ensemble stats consistent",
     lambda <- min(-1  + 0.01 * t, 0)
     exp (lambda)
   }
-  nensemble <- 3000
+  nensemble <- 1000
   nobs <- 90
   x <- matrix(nrow=nobs, ncol=nensemble)
   for (i in seq(1, nensemble)){
     updater <- make_time_dependent_updater(f=phi_t)
     w <- rnorm(nobs - 1)
-    init <- rnorm(n=1, sd=sqrt(1.15))
+    init <- rnorm(n=1, sd=sqrt(1.16))
     x[, i] <- Reduce(updater, x=w, init=init, accumulate=TRUE)
   }
-  est <- get_stats(x, center_trend="assume_zero", stat_bandwidth=3)
+  est <- get_stats(x, center_trend="assume_zero", stat_bandwidth=3,
+                   stat_trend="local_linear")
   lambda_ests <- log(est$stats$autocorrelation[-1])
-  lambda_known <- seq(from=-1, by=0.01, len=nobs - 1)
+  lambda_known <- seq(from=-1, by=0.01, len=nobs)
+  var_known <-  1 / (1 - exp(2 * lambda_known))
   error_in_mean <- est$stats$mean
   expect_equal(mean(error_in_mean), 0)
-  error_in_lambda <- lambda_ests - lambda_known
+  error_in_lambda <- lambda_ests - lambda_known[-1]
   expect_lt(mean(error_in_lambda ^ 2), 0.01)
+  expect_lt(mean( (est$stats$var - var_known) ^ 2), 0.05)
   expect_lt(mean(est$stats$skewness ^ 2), 0.01)
   expect_lt(mean( (est$stats$kurtosis - 3) ^ 2), 0.01)
 
-  trend <- sin(2 * pi * (1:nobs) / nobs)
+  trend <- sin(2 * pi * (1:nobs) / nobs) + 2
   xx <- x + trend
   est <- get_stats(xx, center_trend="local_constant", center_bandwidth=3,
                    stat_bandwidth=3)
   lambda_ests <- log(est$stats$autocorrelation[-1])
   error_in_mean <- est$stats$mean - trend
   expect_lt(mean(error_in_mean ^ 2), 0.01)
-  error_in_lambda <- lambda_ests - lambda_known
+  error_in_lambda <- lambda_ests - lambda_known[-1]
   expect_lt(mean(error_in_lambda ^ 2), 0.01)
+  expect_lt(mean( (est$stats$var - var_known) ^ 2), 0.05)
+  error_in_cv <- est$stats$coefficient_of_variation -  sqrt(var_known) / trend
+  expect_lt(sqrt(mean((error_in_cv) ^ 2)), 0.05)
+  error_in_id <- est$stats$index_of_dispersion -  var_known / trend
+  expect_lt(sqrt(mean((error_in_id) ^ 2)), 0.1)
   expect_lt(mean(est$stats$skewness ^ 2), 0.01)
   expect_lt(mean( (est$stats$kurtosis - 3) ^ 2), 0.01)
 })
