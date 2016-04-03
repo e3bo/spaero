@@ -123,7 +123,8 @@ test_that("large bandwidth autocor estimates agree with acf", {
 
 context("expected use of get_stats")
 
-test_that("estimate of time-dependent autocorrelation consistent", {
+test_that(paste("estimate of ensemble stats consistent",
+                "in case of time-dependent AR(1) model"), {
   make_time_dependent_updater <- function(f) {
     t <- 0
     updater <- function(xlast, w) {
@@ -137,7 +138,7 @@ test_that("estimate of time-dependent autocorrelation consistent", {
     lambda <- min(-1  + 0.01 * t, 0)
     exp (lambda)
   }
-  nensemble <- 1000
+  nensemble <- 3000
   nobs <- 90
   x <- matrix(nrow=nobs, ncol=nensemble)
   for (i in seq(1, nensemble)){
@@ -149,14 +150,22 @@ test_that("estimate of time-dependent autocorrelation consistent", {
   est <- get_stats(x, center_trend="assume_zero", stat_bandwidth=3)
   lambda_ests <- log(est$stats$autocorrelation[-1])
   lambda_known <- seq(from=-1, by=0.01, len=nobs - 1)
-  error <- lambda_ests - lambda_known
-  expect_lt(sqrt(mean(error ^ 2)), 0.05)
+  error_in_mean <- est$stats$mean
+  expect_equal(mean(error_in_mean), 0)
+  error_in_lambda <- lambda_ests - lambda_known
+  expect_lt(mean(error_in_lambda ^ 2), 0.01)
+  expect_lt(mean(est$stats$skewness ^ 2), 0.01)
+  expect_lt(mean( (est$stats$kurtosis - 3) ^ 2), 0.01)
 
   trend <- sin(2 * pi * (1:nobs) / nobs)
   xx <- x + trend
   est <- get_stats(xx, center_trend="local_constant", center_bandwidth=3,
                    stat_bandwidth=3)
   lambda_ests <- log(est$stats$autocorrelation[-1])
-  error <- lambda_ests - lambda_known
-  expect_lt(sqrt(mean(error ^ 2)), 0.05)
+  error_in_mean <- est$stats$mean - trend
+  expect_lt(mean(error_in_mean ^ 2), 0.01)
+  error_in_lambda <- lambda_ests - lambda_known
+  expect_lt(mean(error_in_lambda ^ 2), 0.01)
+  expect_lt(mean(est$stats$skewness ^ 2), 0.01)
+  expect_lt(mean( (est$stats$kurtosis - 3) ^ 2), 0.01)
 })
