@@ -116,12 +116,12 @@ get_stats <- function(x, center_trend="grand_mean", center_kernel="gaussian",
   stats$index_of_dispersion <- stats$var / stats$mean
   stats$coefficient_of_variation <- sqrt(stats$var) / stats$mean
   stats$skewness <- get_noncentral_moments(centered$x, trend=stat_trend,
-                                         bandwidth=stat_bandwidth,
-                                         kernel=stat_kernel, moment_number=3)
+                                           bandwidth=stat_bandwidth,
+                                           kernel=stat_kernel, moment_number=3)
   stats$skewness <- stats$skewness$smooth / stats$variance ^ (3 / 2)
   stats$kurtosis <- get_noncentral_moments(centered$x, trend=stat_trend,
-                                         bandwidth=stat_bandwidth,
-                                         kernel=stat_kernel, moment_number=4)
+                                           bandwidth=stat_bandwidth,
+                                           kernel=stat_kernel, moment_number=4)
   stats$kurtosis <- stats$kurtosis$smooth / stats$variance ^ 2
   ret <- list(stats=stats, centered=centered, stat_trend=stat_trend,
               stat_kernel=stat_kernel, stat_bandwidth=stat_bandwidth, lag=lag)
