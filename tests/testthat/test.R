@@ -200,3 +200,67 @@ test_that(paste("estimate of ensemble stats consistent",
   expect_lt(mean(est$stats$skewness ^ 2), 0.01)
   expect_lt(mean( (est$stats$kurtosis - 3) ^ 2), 0.01)
 })
+
+
+test_that(paste("estimate of stats consistent",
+                "in case of stationary AR(1) model"), {
+
+  nobs <- 4e3
+  w <- rnorm(nobs - 1)
+  phi <- 0.1
+  xnext <- function(xlast, w) phi * xlast + w
+  x <- Reduce(xnext, x=w, init=0, accumulate=TRUE)
+
+  est <- get_stats(x, center_trend="assume_zero", stat_bandwidth=nobs,
+                   stat_kernel="uniform", stat_trend="local_linear")
+  lambda_ests <- log(est$stats$autocorrelation[-1])
+  lambda_known <- rep(log(phi), nobs)
+  var_known <-  1 / (1 - exp(2 * lambda_known))
+  error_in_mean <- est$stats$mean
+
+  expect_equal(est$centered$x[, 1] + est$centered$center, x)
+  expect_equal(mean(error_in_mean), 0)
+  error_in_lambda <- lambda_ests - lambda_known[-1]
+  expect_lt(mean(error_in_lambda ^ 2), 0.1)
+
+  ac_error <- est$stats$autocor - exp(lambda_known)
+  acov_error <- est$stats$autocov - exp(lambda_known) * var_known
+  expect_lt(mean(ac_error ^ 2, na.rm=TRUE), 0.002)
+  expect_lt(mean(acov_error ^ 2, na.rm=TRUE), 0.1)
+
+  decay_time_error <- est$stats$decay_time[-1] -  -1 / lambda_known[-1]
+  expect_lt((mean(decay_time_error ^ 2)), 0.5)
+
+  expect_lt(mean( (est$stats$var - var_known) ^ 2), 0.1)
+  expect_lt(mean(est$stats$skewness ^ 2), 0.02)
+  expect_lt(mean( (est$stats$kurtosis - 3) ^ 2), 0.05)
+
+  trend <- sin(2 * pi * (1:nobs) / nobs) + 2
+  xx <- x + trend
+  est <- get_stats(xx, center_trend="local_constant",
+                   center_bandwidth=nobs / 16,
+                   stat_bandwidth=nobs)
+  lambda_ests <- log(est$stats$autocorrelation[-1])
+
+  error_in_mean <- est$stats$mean - trend
+  expect_equal(est$centered$x[, 1] + est$centered$center, xx)
+  expect_lt(mean(error_in_mean ^ 2), 0.05)
+  error_in_lambda <- lambda_ests - lambda_known[-1]
+  expect_lt(mean(error_in_lambda ^ 2), 0.2)
+
+  ac_error <- est$stats$autocor - exp(lambda_known)
+  acov_error <- est$stats$autocov - exp(lambda_known) * var_known
+  expect_lt(mean(ac_error ^ 2, na.rm=TRUE), 0.002)
+  expect_lt(mean(acov_error ^ 2, na.rm=TRUE), 0.1)
+
+  decay_time_error <- est$stats$decay_time[-1] -  -1 / lambda_known[-1]
+  expect_lt((mean(decay_time_error ^ 2)), 0.5)
+
+  expect_lt(mean( (est$stats$var - var_known) ^ 2), 0.1)
+  error_in_cv <- est$stats$coefficient_of_variation -  sqrt(var_known) / trend
+  expect_lt(sqrt(mean( (error_in_cv) ^ 2)), 0.2)
+  error_in_id <- est$stats$index_of_dispersion -  var_known / trend
+  expect_lt(sqrt(mean( (error_in_id) ^ 2)), 0.2)
+  expect_lt(mean(est$stats$skewness ^ 2), 0.01)
+  expect_lt(mean( (est$stats$kurtosis - 3) ^ 2), 0.02)
+})
