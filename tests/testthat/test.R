@@ -264,3 +264,31 @@ test_that(paste("estimate of stats consistent",
   expect_lt(mean(est$stats$skewness ^ 2), 0.01)
   expect_lt(mean( (est$stats$kurtosis - 3) ^ 2), 0.02)
 })
+
+test_that(paste("Estimate of stats consistent with other methods",
+                "in case of moving window estimates in",
+                "nonstationary AR(1) model"), {
+
+  params <- c(gamma=24, mu=0.014, d=0.014, eta=1e-4, beta=0,
+              rho=0.9, S_0=1, I_0=0, R_0=0, N_0=1e5)
+  covar <- data.frame(gamma_t=c(0, 0), mu_t=c(0, 0), d_t=c(0, 0), eta_t=c(0, 0),
+                      beta_t=c(0, 24e-5), time=c(0, 300))
+  times <- seq(0, 200, by=1 / 12)
+
+  sim <- create_simulator(params=params, times=times, covar=covar)
+  so <- pomp::simulate(sim, as.data.frame=TRUE, seed=272)
+
+  bw <- 720
+  n <- nrow(so)
+  sp <- get_stats(diff(so[, "reports"]), center_kernel="uniform",
+                  center_trend="local_constant", center_bandwidth=bw,
+                  stat_bandwidth=bw, stat_kernel="uniform")
+  ew <- earlywarnings::generic_ews(diff(so[, "reports"]),
+                                   winsize=2 * bw / n * 100, detrending="no")
+  spm <- lapply(sp$stats, function(x) x[(bw):(n - bw)])
+
+  expect_equal(ew$acf1, spm$autocorrelation, tolerance=0.01)
+  expect_equal(ew$sd, sqrt(spm$variance), tolerance=0.01)
+  expect_equal(ew$kurt, spm$kurtosis, tolerance=0.01)
+  expect_equal(ew$sk, abs(spm$skewness), tolerance=0.06)
+})

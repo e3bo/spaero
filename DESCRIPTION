@@ -12,6 +12,7 @@ Depends:
 License: MIT + file LICENSE
 LazyData: true
 Suggests:
+    earlywarnings (>= 1.0.59),
     lintr (>= 0.3.3),
     testthat (>= 0.11.0),
     np (>= 0.60.2),
