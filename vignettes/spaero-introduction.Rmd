@@ -42,7 +42,7 @@ accurate.
 \begin{table}[h] \caption{Transition rules for our stochastic SIR model}
 \label{trules}
 \begin{tabular}{lll} \hline{Event}&{($\Delta S,\Delta I, \Delta R$)}&{Rate}\\
-\hline birth of a susceptible & $(1,0,0)$ & $ \mu + \mu_t $\\
+\hline birth of a susceptible & $(1,0,0)$ & $ N_0 (\mu + \mu_t) $\\
 death of a susceptible & $(-1,0,0)$& $S (d + d_t)$\\
 infection & $(-1,1,0)$ & $(\beta + \beta_t) I S + (\eta + \eta_t) S$\\
 death of an infective & $(0,-1,0)$ & $I (d + d_t)$\\
@@ -64,6 +64,7 @@ $S$ & number of susceptible individuals\\
 $I$ & number of infective individuals \\
 $R$ & number of removed individuals \\
 $N$ & total population size, $S + I + R$ \\
+$N_0$ & initial total population size \\
 \hline \end{tabular} \end{table}
 
 Before demonstrating the statistical analysis functions of spearo, we
@@ -133,7 +134,12 @@ pomp::simulate(sim_sis, as.data.frame=TRUE)
 
 Now let's simulate data according to the SIR model where the
 transmission rate starts out well below the threshold value and
-gradually increases.
+gradually increases. Note that parameters corresponding to the initial
+conditions (i.e., $S_0$, $I_0$, and $R_0$) are
+normalized to sum to $N_0$. Thus we can specify that the
+simulation begins with a population of 100,000 susceptibles as
+follows.
+
 ```{r}
 
 params <- c(gamma=24, mu=0.014, d=0.014, eta=1e-4, beta=0,
@@ -167,7 +173,7 @@ plot_st(st1)
 
 ```
 
-The increasing trends in the statistics are a potential warning
+The increasing trends in the statistics are potential warning
 signals that the system is approaching the epidemic threshold. Readers
 interested in this type of analysis can find guidelines in
 @dakos_methods_2012 and may also want to consider performing it with
