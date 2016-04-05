@@ -14,7 +14,9 @@
 #' and a column named time. This data frame describes the time series
 #' of each of the time-dependent parameters. In the simulation,
 #' interpolation based on this data frame determines the value of
-#' these parameters at specific instants in time.
+#' these parameters at specific instants in time. The user must ensure
+#' that these values result in the parameters remaining non-negative
+#' for the course of the simulation.
 #'
 #' @return A pomp object with which simulations can be run via
 #' \code{pomp::simulate}.
@@ -58,10 +60,6 @@ create_simulator <- function(times=seq(0, 9), t0=min(times),
                "Please install it."),
          call. = FALSE)
   }
-  if (any(covar[, c("gamma_t", "mu_t", "d_t", "eta_t", "beta_t")] < 0)){
-    stop("Parameters in covar must remain non-negative at all times",
-         call. = FALSE)
-  }
   data <- data.frame(time=times, reports=NA)
   d <- cbind(birth=c(1,1,1,1,0),
              sdeath=c(1,1,1,1,0),
@@ -96,8 +94,7 @@ create_simulator <- function(times=seq(0, 9), t0=min(times),
     if(params["rho"] < 0 | params["rho"] > 1) {
       stop("rho must be in [0, 1]", call.=FALSE)
     }
-    pos.names <- c("gamma", "mu", "d", "eta", "beta",
-                   "S_0", "I_0", "R_0", "N_0")
+    pos.names <- c("S_0", "I_0", "R_0", "N_0")
     if(any(params[pos.names] < 0)) {
       stop(paste("All", paste(pos.names, collapse=" "), "should be >= 0."),
            call.=FALSE)
