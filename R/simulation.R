@@ -94,12 +94,13 @@ create_simulator <- function(times=seq(0, 9), t0=min(times),
     x0["N"] <- params["N_0"]
     x0[comp.names] <- round(params["N_0"] * fracs / sum(fracs))
     if(params["rho"] < 0 | params["rho"] > 1) {
-      stop("rho must be in [0, 1]")
+      stop("rho must be in [0, 1]", call.=FALSE)
     }
     pos.names <- c("gamma", "mu", "d", "eta", "beta",
                    "S_0", "I_0", "R_0", "N_0")
     if(any(params[pos.names] < 0)) {
-      stop(paste("All", paste(pos.names, collapse=" "), "should be >= 0."))
+      stop(paste("All", paste(pos.names, collapse=" "), "should be >= 0."),
+           call.=FALSE)
     }
     x0
   }

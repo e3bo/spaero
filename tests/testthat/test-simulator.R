@@ -1,5 +1,25 @@
 
+context("Simulator object creation")
+
+test_that("Argument checking works", {
+  with_mock(requireNamespace = function(package, ..., quietly=FALSE) FALSE,
+            expect_error(create_simulator(),
+                         regexp="The pomp package is needed"))
+  foo <- create_simulator()
+  params <- c(gamma=-24, mu=0.014, d=0.014, eta=1e-4, beta=24e-2,
+              rho=0.9, S_0=1, I_0=0, R_0=0, N_0=1e2)
+  expect_error(pomp::simulate(foo, params=params))
+  params <- c(gamma=24, mu=0.014, d=0.014, eta=1e-4, beta=24e-2,
+              rho=-9, S_0=1, I_0=0, R_0=0, N_0=1e2)
+  expect_error(pomp::simulate(foo, params=params))
+  covar <- data.frame(gamma_t=c(0, 0), mu_t=c(0, 0), d_t=c(0, 0), eta_t=c(0, 0),
+                      beta_t=c(0, -24e-5), time=c(0, 300))
+  expect_error(create_simulator(covar=covar), "must remain non-negative")
+})
+
 context("Gillespie direct method simulator")
+
+
 
 test_that(paste("Mean and stddev of stationary model over time",
                 "consistent with ensemble mean and stdev of dizzy",
