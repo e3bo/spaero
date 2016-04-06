@@ -208,7 +208,7 @@ autocor <- function(x, cortype=c("correlation", "covariance"), lag=1,
   trend <- match.arg(trend)
   cortype <- match.arg(cortype)
   kernel <- match.arg(kernel)
-  x <- na.fail(x)
+  x <- stats::na.fail(x)
   x <- as.matrix(x)
   if (!is.numeric(x)) stop("'x' must be numeric")
   if (lag < 0) stop("'lag' must be >= 0")
