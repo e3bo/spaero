@@ -15,7 +15,7 @@ New submission
 Possibly mis-spelled words in DESCRIPTION:
   AERO (2:29)
 
-The spelling AERO is corret.
+The spelling AERO is correct.
 
 ## Downstream dependencies
 
