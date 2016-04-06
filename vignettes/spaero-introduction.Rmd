@@ -11,19 +11,20 @@ vignette: >
 ---
 
 The spaero package (pronounced sparrow) currently supports the
-estimation of statistics along rolling windows of time series. Such
-estimates may in some cases provide signals that the system generating
-the data is approaching a critical transition. Examples of critical
-transitions include the eutrophication of lakes, changes in climate,
-and the emergence or eradication of infectious diseases. The spearo
-package will be developed to further support statistical methods to
-anticipate critical transitions in infectious disease systems. Because
-these methods will be based on generic properties of dynamical
-systems, they have the potential to apply to a broad range of models.
-Spearo also provides functions to support computational experiments
-designed to evaluate these methods for applications relevant to
-infectious disease systems. This document provides a rudimentary
-demonstration of the application of such methods to simulated data.
+estimation of distributional properties along rolling windows of time
+series. Such estimates may in some cases provide signals that the
+system generating the data is approaching a critical
+transition. Examples of critical transitions include the
+eutrophication of lakes, changes in climate, and the emergence or
+eradication of infectious diseases. The spearo package will be
+developed to further support statistical methods to anticipate
+critical transitions in infectious disease systems. Because these
+methods will be based on generic properties of dynamical systems, they
+have the potential to apply to a broad range of models.  Spearo also
+provides functions to support computational experiments designed to
+evaluate these methods for applications relevant to infectious disease
+systems. This document provides a rudimentary demonstration of the
+application of such methods to simulated data.
 
 Our simulated data is a time series produced by a stochastic SIR
 simulator included in the spaero package. See @keeling2008 for an
@@ -209,14 +210,14 @@ for each observation. These weights are used in the estimators
 described next. Note that these bandwidth conventions are different
 from those of \texttt{generic\_ews}.
 
-By default, \texttt{get\_stats} estimates statistics via weighted
+By default, \texttt{get\_stats} computes statistics via weighted
 sample moments. To clarify, the estimate of the moment for the moving
 window centered on index $i$ of the time series $x$ is
 \begin{equation} m_i(f_j(x)) = \sum_j w_{ij} f_j(x) / N_i,
 \end{equation} where $w_{ij}$ is a kernel weight, $f_j(x)$ is the
 value of the moment at index $j$, and $N_i = \sum_j w_{ij}$ is a
 normalization constant. Table~\ref{tstats} provides the formulas for
-the statistics estimated in terms of these moment estimates.  In some
+the statistics computed in terms of these moment estimates.  In some
 cases, users may obtain less biased estimates by setting the
 "stat_trend" argument to "local_linear". This replaces the weighted
 average estimate with a prediction from a local linear
@@ -225,7 +226,7 @@ series if a trend exists such that $f_j(x)$ for $j$ near $i$ tend to
 be above or below the expected value of $f_i(x)$ across repeated
 realizations of a time series.
 
-\begin{table}[h] \caption{Formulas for statistics at windows in terms of moment estimates.}  \label{tstats}
+\begin{table}[h] \caption{Formulas for moving window statistics in terms of moment estimates.}  \label{tstats}
 \begin{tabular}{ll}
 \hline
 Statistic & Formula\\
@@ -244,7 +245,7 @@ $\textrm{kurtosis}_i$ & $m_i((x_j - \textrm{mean}_j)^4) / (\textrm{variance}_i)^
 \end{table}
 
 Let's look at the effect of changing some of these parameters on the
-estimated statistics.  First we try a Gaussian window.
+computed statistics.  First we try a Gaussian window.
 
 ```{r}
 

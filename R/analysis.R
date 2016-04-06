@@ -1,7 +1,7 @@
-#' Get estimates of time-dependent statistics.
+#' Get estimates of time-dependent properties of models.
 #'
-#' \code{get_stats} estimates time-dependent statistics from ensemble
-#' time series.
+#' \code{get_stats} estimates time-dependent properties of models
+#' (e.g., variance) from ensemble time series.
 #'
 #' Any missing values in 'x' will cause an error.
 #'
@@ -24,8 +24,8 @@
 #' smoothers avoid biases that the one-sided kernels at the ends of
 #' the time series can create for the local constant smoothers.
 #'
-#' See the vignette "Getting started with spaero" for the formulas
-#' used to calculate each statistic.
+#' See the vignette "Getting Started with spaero" for the formulas
+#' used for each estimate.
 #'
 #' @param x A univariate or multivariate numeric time series object or
 #' a numeric vector or matrix.
@@ -38,27 +38,31 @@
 #' @param center_bandwidth Bandwith of kernel for any local detrending
 #' done. A numeric value >= 1.
 #' @param stat_trend Character string giving method of smoothing
-#' statistics estimated. Allowed values are '"local_constant"', and
+#' estimates. Allowed values are '"local_constant"', and
 #' '"local_linear"'. Will be partially matched.
 #' @param stat_kernel Character string giving the kernel for local
-#' smoothing of estimated statistics. Allowed values are '"gaussian"' and '"uniform"'.
-#' @param stat_bandwidth Bandwith of kernel for local smoothing of statistics.
-#' A numeric value >= 1.
-#' @param lag Integer lag at which to calculate the acf. This lag is in terms
-#' of the index of \code{x} and does not account for the frequency of
-#' \code{x} if \code{x} is a time series. It should be positive.
+#' smoothing of estimates. Allowed values are '"gaussian"'
+#' and '"uniform"'.
+#' @param stat_bandwidth Bandwith of kernel for local smoothing of
+#' estimates.  A numeric value >= 1.
+#' @param lag Integer lag at which to calculate the acf. This lag is
+#' in terms of the index of \code{x} and does not account for the
+#' frequency of \code{x} if \code{x} is a time series. It should be
+#' positive.
 #' @return A list with elements '"stats"', '"centered"',
 #' '"stat_trend"', '"stat_kernel"', '"stat_bandwidth"', and
-#' '"lag"'. "stats" is a list containg vectors of the estimated
-#' statistics. '"centered"' is a list of the detrend time series, the
+#' '"lag"'. "stats" is a list containg vectors of the
+#' estimates. '"centered"' is a list of the detrend time series, the
 #' trend subtracted, and the bandwidth used in the detrending. The
 #' other elements record the parameters provided to this function for
 #' future reference.
 #'
 #' @seealso \code{\link{acf}}, \code{\link{var}},
 #' \code{\link[moments]{kurtosis}}, and
-#' \code{\link[moments]{skewness}} for estimation of statistics that
-#' are not time-dependent.
+#' \code{\link[moments]{skewness}} for estimation of properties that
+#' are not time-dependent. See
+#' \code{\link[earlywarnings]{generic_ews}} for another approach to
+#' estimation of time-dependent properties.
 #' @export
 #' @examples
 #'
