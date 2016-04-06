@@ -87,7 +87,7 @@ create_simulator <- function(times=seq(0, 9), t0=min(times),
   initializer <- function(params, t0, ...) {
     comp.names <- c("S", "I", "R")
     ic.names <- c("S_0", "I_0", "R_0")
-    x0 <- setNames(numeric(5), c("S", "I", "R", "N", "cases"))
+    x0 <- stats::setNames(numeric(5), c("S", "I", "R", "N", "cases"))
     fracs <- params[ic.names]
     x0["N"] <- params["N_0"]
     x0[comp.names] <- round(params["N_0"] * fracs / sum(fracs))

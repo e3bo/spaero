@@ -46,7 +46,9 @@ frame with a column named for each of the time-dependent parameters
 and a column named time. This data frame describes the time series
 of each of the time-dependent parameters. In the simulation,
 interpolation based on this data frame determines the value of
-these parameters at specific instants in time.
+these parameters at specific instants in time. The user must ensure
+that these values result in the parameters remaining non-negative
+for the course of the simulation.
 }
 \examples{
 

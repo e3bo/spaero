@@ -135,7 +135,7 @@ detrend <- function(x, trend=c("grand_mean", "ensemble_means",
                     bandwidth=NULL){
   trend <- match.arg(trend)
   kernel <- match.arg(kernel)
-  x <- na.fail(x)
+  x <- stats::na.fail(x)
   x <- as.matrix(x)
   if (!is.numeric(x)) stop("'x' must be numeric")
   rmn <- rowMeans(x)
@@ -178,7 +178,7 @@ smooth <- function(data, est, kernel="gaussian", bandwidth){
   if(kernel == "gaussian") {
     kern <- function(ind, bw=bandwidth){
       dist <- abs(data$step - ind) / bw
-      w <- dnorm(dist)
+      w <- stats::dnorm(dist)
       w / sum(w)
     }
   } else {
@@ -241,7 +241,7 @@ get_noncentral_moments <- function(x, moment_number=3, bandwidth=NULL,
                                    kernel=c("gaussian", "uniform")){
   trend <- match.arg(trend)
   kernel <- match.arg(kernel)
-  x <- na.fail(x)
+  x <- stats::na.fail(x)
   x <- as.matrix(x)
   if (!is.numeric(x)) stop("'x' must be numeric")
   if (moment_number < 1) stop("'moment_number' must be >= 1")
