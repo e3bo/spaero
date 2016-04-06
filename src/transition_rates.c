@@ -28,7 +28,6 @@
 double _transition_rates (int j, double t, double *x, double *p,
 		          int *stateindex, int *parindex, int *covindex,
 		          int ncovar, double *covar) {
-  double beta;
   double rate = 0.0;
 
   switch (j) {
