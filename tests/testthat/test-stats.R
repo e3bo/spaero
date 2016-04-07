@@ -1,7 +1,3 @@
-has_ew <- function() requireNamespace("earlywarnings", quietly = TRUE)
-has_np <- function() requireNamespace("np", quietly = TRUE)
-has_pomp <- function() requireNamespace("pomp", quietly = TRUE)
-
 set.seed(123)
 
 context("detrending")
@@ -33,15 +29,12 @@ test_that("Skipping detrending works", {
 context("smoothing")
 
 test_that("Smoothing function works as expected", {
-  if (!has_np()){
-    skip("np package not available")
-  } else {
-    if (is.null(options("np.messages")$np.messages)) {
-      options(np.messages = TRUE)
-    }
-    if (is.null(options("np.tree")$np.tree)) {
-      options(np.tree = FALSE)
-    }
+  skip_if_not_installed("np")
+  if (is.null(options("np.messages")$np.messages)) {
+    options(np.messages = TRUE)
+  }
+  if (is.null(options("np.tree")$np.tree)) {
+    options(np.tree = FALSE)
   }
   np_smooth <- function(data, est, bandwidth, kernel="gaussian"){
     is.constant <- grepl("constant", est)
@@ -101,6 +94,8 @@ test_that("invalid arguments lead to errors", {
 })
 
 test_that("large bandwidth autocor estimates agree with acf", {
+  skip_on_cran()
+
   w <- rnorm(1000)
   xnext <- function(xlast, w) 0.1 * xlast + w
   x <- Reduce(xnext, x=w, init=0, accumulate=TRUE)
@@ -205,6 +200,7 @@ test_that(paste("estimate of ensemble stats consistent",
 
 test_that(paste("estimate of stats consistent",
                 "in case of stationary AR(1) model"), {
+  skip_on_cran()
 
   nobs <- 4e3
   w <- rnorm(nobs - 1)
@@ -269,12 +265,10 @@ test_that(paste("estimate of stats consistent",
 test_that(paste("Estimate of stats consistent with other methods",
                 "in case of moving window estimates in",
                 "nonstationary AR(1) model"), {
-  if (!has_pomp()){
-    skip("pomp is not available")
-  }
-  if (!has_ew()){
-    skip("earlywarnings is not available")
-  }
+  skip_if_not_installed("pomp")
+  skip_if_not_installed("earlywarnings")
+  skip_on_cran()
+
   params <- c(gamma=24, mu=0.014, d=0.014, eta=1e-4, beta=0,
               rho=0.9, S_0=1, I_0=0, R_0=0, N_0=1e5)
   covar <- data.frame(gamma_t=c(0, 0), mu_t=c(0, 0), d_t=c(0, 0), eta_t=c(0, 0),

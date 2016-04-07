@@ -1,11 +1,7 @@
-
-has_lintr <- function() requireNamespace("lintr", quietly = TRUE)
-
 context("lints")
 
 test_that("Package Style", {
-  if (!has_lintr()) skip("lintr not available")
+  skip_if_not_installed("lintr")
+  skip_on_cran()
   lintr::expect_lint_free()
 })
-
-
