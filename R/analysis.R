@@ -111,7 +111,15 @@ get_stats <- function(x, center_trend="grand_mean", center_kernel="gaussian",
                                   kernel=stat_kernel, bandwidth=stat_bandwidth,
                                   cortype="covariance", lag=lag)
   stats$autocovariance <- stats$autocovariance$smooth
-  stats$autocorrelation <- stats$autocovariance / stats$variance
+  if (lag > 0) {
+      denom <- stats$variance[-seq_len(lag)]
+      desel <- seq(length(stats$variance) - lag + 1, length(stats$variance))
+      denom <- sqrt(denom * stats$variance[-desel])
+      denom <- c(rep(NA, lag), denom)
+  } else {
+      denom <- stats$variance
+  }
+  stats$autocorrelation <- stats$autocovariance / denom
   ac01 <- ifelse(0 > stats$autocorrelation, 0, stats$autocorrelation)
   ac01 <- ifelse(1 > ac01, ac01, 1)
   denom <- log(ac01)

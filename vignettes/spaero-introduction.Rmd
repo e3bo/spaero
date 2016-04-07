@@ -6,7 +6,7 @@ output: rmarkdown::pdf_document
 bibliography: ews.bib
 vignette: >
   %\VignetteIndexEntry{Getting Started with spaero}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::rmarkdown_notangle}
   %\VignetteEncoding{UTF-8}
 ---
 
@@ -186,8 +186,8 @@ Two key parameters that the user must provide to \texttt{get\_stats}
 are the shape and size of the rolling window. There is a rolling
 window for an estimate of the mean and for an estimate of statistics
 within the window. Arguments controlling these windows are prefixed
-with the "center_" and "stat_" respectively. An estimate of the mean
-is necessary because the calculation of the statistics involve
+with "center_" and "stat_" respectively. An estimate of the mean
+is necessary because the calculations of the statistics involve
 deviations from the mean. \texttt{get\_stats} supports estimation of
 the mean via several methods and users may also estimate the mean
 using other methods, subtract it from the input time series, and then
@@ -233,8 +233,11 @@ Statistic & Formula\\
 \hline
 $\textrm{mean}_i$ & $m_i(x_j)$ \\
 $\textrm{variance}_i$ & $m_i((x_j - \textrm{mean}_j)^2)$ \\
-$\textrm{autocovariance}_i$ & $m_i( (x_j - \textrm{mean}_j) (x_{j - \textrm{lag}} - \textrm{mean}_{j -\textrm{lag}}))$ \\
-$\textrm{autocorrelation}_i$ & $\textrm{autocovariance}_i / \textrm{variance}_i$ \\
+$\textrm{autocovariance}_i$ & $m_i( (x_j - \textrm{mean}_j)
+                                  (x_{j - \textrm{lag}} - \textrm{mean}_{j -\textrm{lag}}))$ \\
+$\textrm{autocorrelation}_i$ & $\textrm{autocovariance}_i /
+                                (\textrm{variance}_i \times
+                                \textrm{variance}_{i - \textrm{lag}})^{0.5} $ \\
 $(\textrm{decay time})_i$ & $-\textrm{lag} / (\log \min(\max(\textrm{autocorrelation}_i, 0), 1)$) \\
 $(\textrm{index of dispersion})_i$ & $\textrm{variance}_i / \textrm{mean}_i$ \\
 $(\textrm{coefficient of variation})_i$ & $(\textrm{variance}_i)^{0.5} / \textrm{mean}_i$ \\
