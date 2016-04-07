@@ -1,13 +1,7 @@
 
-has_pomp <- function() requireNamespace("pomp", quietly = TRUE)
-
 context("Simulator object creation")
 
 test_that("Argument checking works", {
-  if (!has_pomp()){
-    skip("pomp package not available")
-  }
-
   with_mock(requireNamespace = function(package, ..., quietly=FALSE) FALSE,
             expect_error(create_simulator(),
                          regexp="The pomp package is needed"))
@@ -25,9 +19,6 @@ context("Gillespie direct method simulator")
 test_that(paste("Mean and stddev of stationary model over time",
                 "consistent with ensemble mean and stdev of dizzy",
                 "progam's implementation"), {
-  if (!has_pomp()){
-    skip("pomp package not available")
-  }
 
   params <- c(gamma=24, mu=0.014, d=0.014, eta=1e-4, beta=24e-2,
               rho=0.9, S_0=1, I_0=0, R_0=0, N_0=1e2)
@@ -47,9 +38,6 @@ test_that(paste("Mean and stddev of stationary model over time",
 test_that(paste("Means and final stddev of time-dependent model",
                 "consistent with ensemble mean and stdev of dizzy",
                 "progam's implementation"), {
-  if (!has_pomp()){
-    skip("pomp package not available")
-  }
 
   params <- c(gamma=24, mu=0.014, d=0.014, eta=1e-4, beta=0e-2,
               rho=0.9, S_0=1, I_0=0, R_0=0, N_0=1e2)
@@ -109,9 +97,6 @@ test_that(paste("Means and final stddev of time-dependent model",
 
 test_that(paste("Fluctuations for large system sizes approximate AR process",
                 "given by linear noise approximation"), {
-  if (!has_pomp()){
-    skip("pomp package not available")
-  }
 
   params <- c(gamma=16.59091, mu=0.02, d=0.02, eta=2e-4, beta=100e-6,
               rho=0.9, S_0=0.165779, I_0=0.001004, R_0=0.833216, N_0=1e6)
