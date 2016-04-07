@@ -1,10 +1,3 @@
-if (requireNamespace("lintr", quietly = TRUE)) {
-  context("lints")
-  test_that("Package Style", {
-    lintr::expect_lint_free()
-  })
-}
-
 set.seed(123)
 
 context("detrending")
@@ -33,48 +26,50 @@ test_that("Skipping detrending works", {
   expect_equal(detrend(1:10, trend="assume_zero")$x, matrix(1:10))
 })
 
-if (requireNamespace("np", quietly = TRUE)) {
-  if (is.null(options("np.messages")$np.messages)) options(np.messages = TRUE)
-  if (is.null(options("np.tree")$np.tree)) options(np.tree = FALSE)
+context("smoothing")
 
-  context("smoothing")
+test_that("Smoothing function works as expected", {
+  skip_if_not_installed("np")
+  if (is.null(options("np.messages")$np.messages)) {
+    options(np.messages = TRUE)
+  }
+  if (is.null(options("np.tree")$np.tree)) {
+    options(np.tree = FALSE)
+  }
+  np_smooth <- function(data, est, bandwidth, kernel="gaussian"){
+    is.constant <- grepl("constant", est)
+    rt <- ifelse(is.constant, "lc", "ll")
+    bw <- np::npregbw(formula=rmn ~ step, bws=bandwidth,
+                      regtype=rt, ckertype=kernel,
+                      bandwidth.compute=FALSE, data=data,
+                      na.action=na.fail)
+    mod <- np::npreg(bw)
+    list(smooth=fitted(mod), bandwidth=bw$bw)
+  }
+  data <- data.frame(step=1:10, rmn=1:10)
+  expect_equal(smooth(data, est="local_constant", bandwidth=2)$smooth,
+               np_smooth(data, est="local_constant",  bandwidth=2)$smooth)
+  expect_equal(smooth(data, est="local_linear", bandwidth=2)$smooth,
+               np_smooth(data, est="local_linear",  bandwidth=2)$smooth,
+               check.names=FALSE)
 
-  test_that("Smoothing function works as expected", {
-    np_smooth <- function(data, est, bandwidth, kernel="gaussian"){
-      is.constant <- grepl("constant", est)
-      rt <- ifelse(is.constant, "lc", "ll")
-      bw <- np::npregbw(formula=rmn ~ step, bws=bandwidth,
-                        regtype=rt, ckertype=kernel,
-                        bandwidth.compute=FALSE, data=data,
-                        na.action=na.fail)
-      mod <- np::npreg(bw)
-      list(smooth=fitted(mod), bandwidth=bw$bw)
-    }
-    data <- data.frame(step=1:10, rmn=1:10)
-    expect_equal(smooth(data, est="local_constant", bandwidth=2)$smooth,
-                 np_smooth(data, est="local_constant",  bandwidth=2)$smooth)
-    expect_equal(smooth(data, est="local_linear", bandwidth=2)$smooth,
-                 np_smooth(data, est="local_linear",  bandwidth=2)$smooth,
-                 check.names=FALSE)
+  expect_equal(smooth(data, est="local_constant", kernel="uniform",
+                      bandwidth=3)$smooth,
+               np_smooth(data, est="local_constant", kernel="uniform",
+                         bandwidth=3)$smooth)
+  expect_equal(smooth(data, est="local_linear", bandwidth=3)$smooth,
+               np_smooth(data, est="local_linear", bandwidth=3)$smooth,
+               check.names=FALSE)
 
-    expect_equal(smooth(data, est="local_constant", kernel="uniform",
-                        bandwidth=3)$smooth,
-                 np_smooth(data, est="local_constant", kernel="uniform",
-                           bandwidth=3)$smooth)
-    expect_equal(smooth(data, est="local_linear", bandwidth=3)$smooth,
-                 np_smooth(data, est="local_linear", bandwidth=3)$smooth,
-                 check.names=FALSE)
-
-    data2 <- data.frame(step=20:100, rmn=rnorm(81))
-    expect_equal(smooth(data2, est="local_constant", bandwidth=5)$smooth,
-                 np_smooth(data2, est="local_constant", bandwidth=5)$smooth)
-    expect_equal(smooth(data2, est="local_linear", bandwidth=5,
-                        kernel="uniform")$smooth,
-                 np_smooth(data2, est="local_linear", bandwidth=5,
-                           kernel="uniform")$smooth,
-                 check.names=FALSE)
-    })
-}
+  data2 <- data.frame(step=20:100, rmn=rnorm(81))
+  expect_equal(smooth(data2, est="local_constant", bandwidth=5)$smooth,
+               np_smooth(data2, est="local_constant", bandwidth=5)$smooth)
+  expect_equal(smooth(data2, est="local_linear", bandwidth=5,
+                      kernel="uniform")$smooth,
+               np_smooth(data2, est="local_linear", bandwidth=5,
+                         kernel="uniform")$smooth,
+               check.names=FALSE)
+})
 
 context("smoothing arguments")
 
@@ -99,6 +94,8 @@ test_that("invalid arguments lead to errors", {
 })
 
 test_that("large bandwidth autocor estimates agree with acf", {
+  skip_on_cran()
+
   w <- rnorm(1000)
   xnext <- function(xlast, w) 0.1 * xlast + w
   x <- Reduce(xnext, x=w, init=0, accumulate=TRUE)
@@ -201,9 +198,9 @@ test_that(paste("estimate of ensemble stats consistent",
   expect_lt(mean( (est$stats$kurtosis - 3) ^ 2), 0.01)
 })
 
-
 test_that(paste("estimate of stats consistent",
                 "in case of stationary AR(1) model"), {
+  skip_on_cran()
 
   nobs <- 4e3
   w <- rnorm(nobs - 1)
@@ -268,6 +265,9 @@ test_that(paste("estimate of stats consistent",
 test_that(paste("Estimate of stats consistent with other methods",
                 "in case of moving window estimates in",
                 "nonstationary AR(1) model"), {
+  skip_if_not_installed("pomp")
+  skip_if_not_installed("earlywarnings")
+  skip_on_cran()
 
   params <- c(gamma=24, mu=0.014, d=0.014, eta=1e-4, beta=0,
               rho=0.9, S_0=1, I_0=0, R_0=0, N_0=1e5)
