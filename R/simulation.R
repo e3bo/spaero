@@ -4,7 +4,7 @@
 #' simulations of an SIR or SIS model according to Gillespie's direct
 #' method and generate simulated observations of the process.
 #'
-#' See the vignette "Getting started with spaero" for a description of
+#' See the vignette "Getting Started with spaero" for a description of
 #' the model. The "params" argument must include all model
 #' parameters. These will become the default parameters for the model
 #' object. They can be overriden when the simulation is run via the
