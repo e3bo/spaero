@@ -224,7 +224,8 @@ average estimate with a prediction from a local linear
 regression. This method can reduce bias near the ends of the time
 series if a trend exists such that $f_j(x)$ for $j$ near $i$ tend to
 be above or below the expected value of $f_i(x)$ across repeated
-realizations of a time series.
+realizations of a time series. If the prediction is less than zero for
+variance or kurtosis, it is replaced with zero.
 
 \begin{table}[h] \caption{Formulas for moving window statistics in terms of moment estimates.}  \label{tstats}
 \begin{tabular}{ll}

@@ -107,6 +107,7 @@ get_stats <- function(x, center_trend="grand_mean", center_kernel="gaussian",
                                            bandwidth=stat_bandwidth,
                                            moment_number=2)
   stats$variance <- stats$variance$smooth
+  stats$variance[stats$variance < 0] <- 0
   stats$autocovariance <- autocor(centered$x, trend=stat_trend,
                                   kernel=stat_kernel, bandwidth=stat_bandwidth,
                                   cortype="covariance", lag=lag)
@@ -135,6 +136,7 @@ get_stats <- function(x, center_trend="grand_mean", center_kernel="gaussian",
                                            bandwidth=stat_bandwidth,
                                            kernel=stat_kernel, moment_number=4)
   stats$kurtosis <- stats$kurtosis$smooth / stats$variance ^ 2
+  stats$kurtosis[stats$kurtosis < 0] <- 0
   ret <- list(stats=stats, centered=centered, stat_trend=stat_trend,
               stat_kernel=stat_kernel, stat_bandwidth=stat_bandwidth, lag=lag)
   ret
