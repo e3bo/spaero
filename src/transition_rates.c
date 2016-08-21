@@ -69,7 +69,7 @@ double _transition_rates_frequency_dependent (int j, double t, double *x, double
     rate = SUSC * (D + D_T);
     break;
   case 3:			// infection
-    rate = ((BETA + BETA_T) * INFD + (ETA + ETA_T)) * SUSC / POPN;
+    rate = ((BETA + BETA_T) * INFD / POPN + (ETA + ETA_T)) * SUSC;
     break;
   case 4:			// infected death
     rate = INFD * (D + D_T);

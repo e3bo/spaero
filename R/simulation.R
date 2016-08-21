@@ -26,6 +26,9 @@
 #' variable set to the initial conditions specified via params.
 #' @param process_model Character string giving the process
 #' model. Allowed values are '"SIR"' and '"SIS"'.
+#' @param transmission Character string decribing the transmission
+#' model. Allowed values are '"density-dependent"' and
+#' '"frequency-dependent"'.
 #' @param params A named numeric vector of parameter values and
 #' initial conditions.
 #' @param covar A data frame containing values of the time-dependent
@@ -48,13 +51,15 @@
 #'
 create_simulator <- function(times=seq(0, 9), t0=min(times),
                              process_model=c("SIR", "SIS"),
+                             transmission=c("density-dependent", "frequency-dependent"),
                              params=c(gamma=24, mu=1 / 70, d=1 / 70, eta=1e-5,
                                  beta=1e-4, rho=0.1, S_0=1, I_0=0, R_0=0,
-                                 N_0=1e5, density_dependent=TRUE),
+                                 N_0=1e5),
                              covar=data.frame(gamma_t=c(0, 0), mu_t=c(0, 0),
                                  d_t=c(0, 0), eta_t=c(0, 0), beta_t=c(0, 0),
                                  time=c(0, 1e6))) {
   process_model <- match.arg(process_model)
+  transmission <- match.arg(transmission)
   if (!requireNamespace("pomp", quietly = TRUE)) {
     stop(paste("The pomp package is needed for this function to work.",
                "Please install it."),
@@ -82,10 +87,10 @@ create_simulator <- function(times=seq(0, 9), t0=min(times),
                recovery=c(1,-1,0,0,1),
                rdeath=c(0,0,-1,-1,0))
   }
-  if (density_dependent) {
+  if (transmission == "density-dependent") {
     rprocess <- pomp::gillespie.sim(rate.fun="_transition_rates_density_dependent",
                                     PACKAGE="spaero", v=v, d=d)
-  } else {
+  } else if (transmission == "frequency-dependent") {
     rprocess <- pomp::gillespie.sim(rate.fun="_transition_rates_frequency_dependent",
                                     PACKAGE="spaero", v=v, d=d)
 
