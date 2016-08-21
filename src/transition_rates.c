@@ -25,7 +25,7 @@
 #define POPN        (x[stateindex[3]]) // population size
 #define CASE        (x[stateindex[4]]) // number of cases (accumulated per reporting period)
 
-double _transition_rates (int j, double t, double *x, double *p,
+double _transition_rates_density_dependent (int j, double t, double *x, double *p,
 		          int *stateindex, int *parindex, int *covindex,
 		          int ncovar, double *covar) {
   double rate = 0.0;
@@ -39,6 +39,37 @@ double _transition_rates (int j, double t, double *x, double *p,
     break;
   case 3:			// infection
     rate = ((BETA + BETA_T) * INFD + (ETA + ETA_T)) * SUSC;
+    break;
+  case 4:			// infected death
+    rate = INFD * (D + D_T);
+    break;
+  case 5:			// recovery
+    rate = INFD * (GAMMA + GAMMA_T);
+    break;
+  case 6:			// recovered death
+    rate = RCVD * (D + D_T);
+    break;
+  default:
+    error("unrecognized rate code %d",j);
+    break;
+  }
+  return rate;
+}
+
+double _transition_rates_frequency_dependent (int j, double t, double *x, double *p,
+		          int *stateindex, int *parindex, int *covindex,
+		          int ncovar, double *covar) {
+  double rate = 0.0;
+
+  switch (j) {
+  case 1: 			// birth
+    rate = N0 * (MU + MU_T);
+    break;
+  case 2:			// susceptible death
+    rate = SUSC * (D + D_T);
+    break;
+  case 3:			// infection
+    rate = ((BETA + BETA_T) * INFD + (ETA + ETA_T)) * SUSC / POPN;
     break;
   case 4:			// infected death
     rate = INFD * (D + D_T);

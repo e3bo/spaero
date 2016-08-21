@@ -50,7 +50,7 @@ create_simulator <- function(times=seq(0, 9), t0=min(times),
                              process_model=c("SIR", "SIS"),
                              params=c(gamma=24, mu=1 / 70, d=1 / 70, eta=1e-5,
                                  beta=1e-4, rho=0.1, S_0=1, I_0=0, R_0=0,
-                                 N_0=1e5),
+                                 N_0=1e5, density_dependent=TRUE),
                              covar=data.frame(gamma_t=c(0, 0), mu_t=c(0, 0),
                                  d_t=c(0, 0), eta_t=c(0, 0), beta_t=c(0, 0),
                                  time=c(0, 1e6))) {
@@ -82,8 +82,14 @@ create_simulator <- function(times=seq(0, 9), t0=min(times),
                recovery=c(1,-1,0,0,1),
                rdeath=c(0,0,-1,-1,0))
   }
-  rprocess <- pomp::gillespie.sim(rate.fun="_transition_rates",
-                                  PACKAGE="spaero", v=v, d=d)
+  if (density_dependent) {
+    rprocess <- pomp::gillespie.sim(rate.fun="_transition_rates_density_dependent",
+                                    PACKAGE="spaero", v=v, d=d)
+  } else {
+    rprocess <- pomp::gillespie.sim(rate.fun="_transition_rates_frequency_dependent",
+                                    PACKAGE="spaero", v=v, d=d)
+
+  }
   initializer <- function(params, t0, ...) {
     comp.names <- c("S", "I", "R")
     ic.names <- c("S_0", "I_0", "R_0")
