@@ -1,6 +1,6 @@
 ## Test environments
 
-* Arch linux, R 3.3.0
+* Arch linux, R 3.3.1
 * winbuilder (devel and release)
 
 ## R CMD check results
