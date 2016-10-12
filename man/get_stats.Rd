@@ -40,13 +40,14 @@ frequency of \code{x} if \code{x} is a time series. It should be
 positive.}
 }
 \value{
-A list with elements '"stats"', '"centered"',
+A list with elements '"stats"', '"taus"', '"centered"',
 '"stat_trend"', '"stat_kernel"', '"stat_bandwidth"', and
 '"lag"'. "stats" is a list containg vectors of the
-estimates. '"centered"' is a list of the detrend time series, the
-trend subtracted, and the bandwidth used in the detrending. The
-other elements record the parameters provided to this function for
-future reference.
+estimates. '"taus"' is a list containg Kendall's correlation
+coefficient of each element of '"stats"' with time. '"centered"' is
+a list of the detrended time series, the trend subtracted, and the
+bandwidth used in the detrending. The other elements record the
+parameters provided to this function for future reference.
 }
 \description{
 \code{get_stats} estimates time-dependent properties of models

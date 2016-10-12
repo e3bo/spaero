@@ -49,13 +49,14 @@
 #' in terms of the index of \code{x} and does not account for the
 #' frequency of \code{x} if \code{x} is a time series. It should be
 #' positive.
-#' @return A list with elements '"stats"', '"centered"',
+#' @return A list with elements '"stats"', '"taus"', '"centered"',
 #' '"stat_trend"', '"stat_kernel"', '"stat_bandwidth"', and
 #' '"lag"'. "stats" is a list containg vectors of the
-#' estimates. '"centered"' is a list of the detrend time series, the
-#' trend subtracted, and the bandwidth used in the detrending. The
-#' other elements record the parameters provided to this function for
-#' future reference.
+#' estimates. '"taus"' is a list containg Kendall's correlation
+#' coefficient of each element of '"stats"' with time. '"centered"' is
+#' a list of the detrended time series, the trend subtracted, and the
+#' bandwidth used in the detrending. The other elements record the
+#' parameters provided to this function for future reference.
 #'
 #' @seealso \code{\link{acf}}, \code{\link{var}},
 #' \code{\link[moments]{kurtosis}}, and
@@ -138,9 +139,15 @@ get_stats <- function(x, center_trend="grand_mean", center_kernel="gaussian",
                                            kernel=stat_kernel, moment_number=4)
   stats$kurtosis <- stats$kurtosis$smooth / stats$variance ^ 2
   stats$kurtosis[stats$kurtosis < 0] <- 0
-  ret <- list(stats=stats, centered=centered, stat_trend=stat_trend,
+
+  taus <- lapply(stats, get_tau)
+  ret <- list(stats=stats, taus=taus, centered=centered, stat_trend=stat_trend,
               stat_kernel=stat_kernel, stat_bandwidth=stat_bandwidth, lag=lag)
   ret
+}
+
+get_tau <- function(x){
+  stats::cor(x=seq_along(x), y=x, method="kendall", use="complete.obs")
 }
 
 detrend <- function(x, trend=c("grand_mean", "ensemble_means",

@@ -15,7 +15,6 @@ LazyData: true
 Suggests:
     earlywarnings (>= 1.0.59),
     knitr (>= 1.11),
-    lintr (>= 0.3.3),
     np (>= 0.60.2),
     pomp (>= 1.2.2.1),
     rmarkdown (>= 0.9.2),
