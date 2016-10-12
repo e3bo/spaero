@@ -71,8 +71,8 @@ test_that(paste("Means and final stddev of time-dependent model",
   ens_infected <- unstack(so, I~sim)
   ens_susceptible <- unstack(so, S~sim)
   dzout <- read.csv(file.path("dizzy", "out-linear-trend.csv"), nrows=100)
-  expect_lt(sqrt(mean((dzout$I - rowMeans(ens_infected)) ^ 2)), 1)
-  expect_lt(sqrt(mean((dzout$S - rowMeans(ens_susceptible)) ^ 2)), 1)
+  expect_lt(sqrt(mean( (dzout$I - rowMeans(ens_infected)) ^ 2)), 1)
+  expect_lt(sqrt(mean( (dzout$S - rowMeans(ens_susceptible)) ^ 2)), 1)
   dzout_fluc <- read.csv(file.path("dizzy", "out-linear-trend.csv"), skip=101,
                          header=FALSE)
   tfsds <- dzout_fluc[, 2]
@@ -102,8 +102,8 @@ test_that(paste("Means and final stddev of time-dependent model",
   ens_susceptible <- unstack(so, S~sim)
   dzout <- read.csv(file.path("dizzy", "out-multiple-moving-parameters.csv"),
                     nrows=100)
-  expect_lt(sqrt(mean((dzout$I - rowMeans(ens_infected)) ^ 2)), 3)
-  expect_lt(sqrt(mean((dzout$S - rowMeans(ens_susceptible)) ^ 2)), 2)
+  expect_lt(sqrt(mean( (dzout$I - rowMeans(ens_infected)) ^ 2)), 3)
+  expect_lt(sqrt(mean( (dzout$S - rowMeans(ens_susceptible)) ^ 2)), 2)
   dzout_fluc <- read.csv(file.path("dizzy",
                                    "out-multiple-moving-parameters.csv"),
                          skip=101, header=FALSE)
@@ -142,6 +142,6 @@ test_that(paste("Fluctuations for large system sizes approximate AR process",
   sim_ac1_SS <- cov(sts[-1, "S"], sts[-nrow(sts), "S"]) / sim_sigma["S", "S"]
   expect_equal(sim_ac1_II, 0.2037399, tol=0.2)
   expect_equal(sim_ac1_IS, 0.8501284, tol=0.2)
-  expect_equal(sim_ac1_SI,-0.9121943, tol=0.2)
+  expect_equal(sim_ac1_SI, -0.9121943, tol=0.2)
   expect_equal(sim_ac1_SS, 0.3079941, tol=0.2)
 })

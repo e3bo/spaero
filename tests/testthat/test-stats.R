@@ -163,9 +163,9 @@ test_that(paste("estimate of ensemble stats consistent",
   expect_lt(mean(acov_error ^ 2, na.rm=TRUE), 0.1)
 
   decay_time_error <- est$stats$decay_time[-1] -  -1 / lambda_known[-1]
-  expect_lt((mean(decay_time_error ^ 2)), 0.5)
+  expect_lt(mean(decay_time_error ^ 2), 0.5)
 
-  expect_lt(mean( (est$stats$var - var_known) ^ 2), 0.1)
+  expect_lt(mean( (est$stats$variance - var_known) ^ 2), 0.1)
   expect_lt(mean(est$stats$skewness ^ 2), 0.01)
   expect_lt(mean( (est$stats$kurtosis - 3) ^ 2), 0.01)
 
@@ -187,9 +187,9 @@ test_that(paste("estimate of ensemble stats consistent",
   expect_lt(mean(acov_error ^ 2, na.rm=TRUE), 0.1)
 
   decay_time_error <- est$stats$decay_time[-1] -  -1 / lambda_known[-1]
-  expect_lt((mean(decay_time_error ^ 2)), 0.5)
+  expect_lt(mean(decay_time_error ^ 2), 0.5)
 
-  expect_lt(mean( (est$stats$var - var_known) ^ 2), 0.1)
+  expect_lt(mean( (est$stats$variance - var_known) ^ 2), 0.1)
   error_in_cv <- est$stats$coefficient_of_variation -  sqrt(var_known) / trend
   expect_lt(sqrt(mean( (error_in_cv) ^ 2)), 0.05)
   error_in_id <- est$stats$index_of_dispersion -  var_known / trend
@@ -228,7 +228,7 @@ test_that(paste("estimate of stats consistent",
   decay_time_error <- est$stats$decay_time[-1] -  -1 / lambda_known[-1]
   expect_lt((mean(decay_time_error ^ 2)), 0.5)
 
-  expect_lt(mean( (est$stats$var - var_known) ^ 2), 0.1)
+  expect_lt(mean( (est$stats$variance - var_known) ^ 2), 0.1)
   expect_lt(mean(est$stats$skewness ^ 2), 0.02)
   expect_lt(mean( (est$stats$kurtosis - 3) ^ 2), 0.05)
 
@@ -253,7 +253,7 @@ test_that(paste("estimate of stats consistent",
   decay_time_error <- est$stats$decay_time[-1] -  -1 / lambda_known[-1]
   expect_lt((mean(decay_time_error ^ 2)), 0.5)
 
-  expect_lt(mean( (est$stats$var - var_known) ^ 2), 0.1)
+  expect_lt(mean( (est$stats$variance - var_known) ^ 2), 0.1)
   error_in_cv <- est$stats$coefficient_of_variation -  sqrt(var_known) / trend
   expect_lt(sqrt(mean( (error_in_cv) ^ 2)), 0.2)
   error_in_id <- est$stats$index_of_dispersion -  var_known / trend
