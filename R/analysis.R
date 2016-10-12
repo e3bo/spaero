@@ -108,6 +108,7 @@ get_stats <- function(x, center_trend="grand_mean", center_kernel="gaussian",
                                            moment_number=2)
   stats$variance <- stats$variance$smooth
   stats$variance[stats$variance < 0] <- 0
+  stats$variance_first_diff <- c(NA, diff(stats$variance))
   stats$autocovariance <- autocor(centered$x, trend=stat_trend,
                                   kernel=stat_kernel, bandwidth=stat_bandwidth,
                                   cortype="covariance", lag=lag)
@@ -126,8 +127,8 @@ get_stats <- function(x, center_trend="grand_mean", center_kernel="gaussian",
   denom <- log(ac01)
   stats$decay_time <- -lag / denom
   stats$mean <- centered$center
-  stats$index_of_dispersion <- stats$var / stats$mean
-  stats$coefficient_of_variation <- sqrt(stats$var) / stats$mean
+  stats$index_of_dispersion <- stats$variance / stats$mean
+  stats$coefficient_of_variation <- sqrt(stats$variance) / stats$mean
   stats$skewness <- get_noncentral_moments(centered$x, trend=stat_trend,
                                            bandwidth=stat_bandwidth,
                                            kernel=stat_kernel, moment_number=3)

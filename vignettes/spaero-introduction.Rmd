@@ -166,8 +166,9 @@ st1 <- get_stats(so[, "reports"], center_kernel="uniform",
                  stat_bandwidth=360)
 plot_st <- function(st) {
   plot_vars <- ts(cbind(Residual=st$centered$x[, 1], Mean=st$stats$mean,
-                  Autocorrelation=st$stats$autocor, Variance=st$stats$var,
-                  Skewness=st$stats$skew, Kurtosis=st$stats$kurt), freq=12)
+                  Autocorrelation=st$stats$autocor, Variance=st$stats$variance,
+                  DeltaVariance=st$stats$variance_first_diff,
+                  Skewness=st$stats$skew), freq=12)
   plot(plot_vars, main="")
 }
 plot_st(st1)
@@ -234,6 +235,7 @@ Statistic & Formula\\
 \hline
 $\textrm{mean}_i$ & $m_i(x_j)$ \\
 $\textrm{variance}_i$ & $m_i((x_j - \textrm{mean}_j)^2)$ \\
+$\textrm{variance\_first\_diff}_i$ & $\textrm{variance}_i - \textrm{variance}_{i - 1}$ \\
 $\textrm{autocovariance}_i$ & $m_i( (x_j - \textrm{mean}_j)
                                   (x_{j - \textrm{lag}} - \textrm{mean}_{j -\textrm{lag}}))$ \\
 $\textrm{autocorrelation}_i$ & $\textrm{autocovariance}_i /
