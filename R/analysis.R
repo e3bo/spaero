@@ -69,50 +69,53 @@
 #'
 #' # A highly autocorrelated time series
 #' x <- 1:10
-#' get_stats(x, stat_bandwidth=3)$stats
+#' get_stats(x, stat_bandwidth = 3)$stats
 #'
 #' # Plot log of acf
-#' plot(log(get_stats(x, stat_bandwidth=3)$stats$autocor))
+#' plot(log(get_stats(x, stat_bandwidth = 3)$stats$autocor))
 #'
 #' # Check estimates with AR1 simulations with lag-1 core 0.1
 #' w <- rnorm(1000)
 #' xnext <- function(xlast, w) 0.1 * xlast + w
-#' x <- Reduce(xnext, x=w, init=0, accumulate=TRUE)
-#' acf(x, lag.max=1, plot=FALSE)
-#' head(get_stats(x, stat_bandwidth=length(x))$stats$autocor)
+#' x <- Reduce(xnext, x = w, init = 0, accumulate = TRUE)
+#' acf(x, lag.max = 1, plot = FALSE)
+#' head(get_stats(x, stat_bandwidth = length(x))$stats$autocor)
 #'
 #' # Check detrending ability
-#' x2 <- x + seq(1, 10, len=length(x))
-#' ans <- get_stats(x2, center_trend="local_linear",
-#'                        center_bandwidth=length(x), stat_bandwidth=length(x))$stats
+#' x2 <- x + seq(1, 10, len = length(x))
+#' ans <- get_stats(x2, center_trend = "local_linear",
+#'                   center_bandwidth = length(x),
+#'                    stat_bandwidth = length(x))$stats
 #' head(ans$autocor)
 #'
 #' # The simple acf estimate is inflated by the trend
-#' acf(x2, lag.max=1, plot=FALSE)
+#' acf(x2, lag.max = 1, plot = FALSE)
 #'
 #'# Check ability to estimate time-dependent autocorrelation
 #' xnext <- function(xlast, w) 0.8 * xlast + w
-#' xhi <- Reduce(xnext, x=w, init=0, accumulate=TRUE)
-#' acf(xhi, lag.max=1, plot=FALSE)
-#' wt <- seq(0, 1, len=length(x))
+#' xhi <- Reduce(xnext, x = w, init = 0, accumulate = TRUE)
+#' acf(xhi, lag.max = 1, plot = FALSE)
+#' wt <- seq(0, 1, len = length(x))
 #' xdynamic <- wt * xhi + (1 - wt) * x
-#' get_stats(xdynamic, stat_bandwidth=100)$stats$autocor
-get_stats <- function(x, center_trend="grand_mean", center_kernel="gaussian",
-                      center_bandwidth=NULL, stat_trend="local_constant",
-                      stat_kernel="uniform", stat_bandwidth=NULL, lag=1){
-  centered <- detrend(x, trend=center_trend, kernel=center_kernel,
-                      bandwidth=center_bandwidth)
+#' get_stats(xdynamic, stat_bandwidth = 100)$stats$autocor
+get_stats <- function(x, center_trend = "grand_mean",
+                      center_kernel = "gaussian", center_bandwidth = NULL,
+                      stat_trend = "local_constant", stat_kernel = "uniform",
+                      stat_bandwidth = NULL, lag = 1){
+  centered <- detrend(x, trend = center_trend, kernel = center_kernel,
+                      bandwidth = center_bandwidth)
   stats <- list()
-  stats$variance <- get_noncentral_moments(centered$x, trend=stat_trend,
-                                           kernel=stat_kernel,
-                                           bandwidth=stat_bandwidth,
-                                           moment_number=2)
+  stats$variance <- get_noncentral_moments(centered$x, trend = stat_trend,
+                                           kernel = stat_kernel,
+                                           bandwidth = stat_bandwidth,
+                                           moment_number = 2)
   stats$variance <- stats$variance$smooth
   stats$variance[stats$variance < 0] <- 0
   stats$variance_first_diff <- c(NA, diff(stats$variance))
-  stats$autocovariance <- autocor(centered$x, trend=stat_trend,
-                                  kernel=stat_kernel, bandwidth=stat_bandwidth,
-                                  cortype="covariance", lag=lag)
+  stats$autocovariance <- autocor(centered$x, trend = stat_trend,
+                                  kernel = stat_kernel,
+                                  bandwidth = stat_bandwidth,
+                                  cortype = "covariance", lag = lag)
   stats$autocovariance <- stats$autocovariance$smooth
   if (lag > 0) {
       denom <- stats$variance[-seq_len(lag)]
@@ -130,31 +133,34 @@ get_stats <- function(x, center_trend="grand_mean", center_kernel="gaussian",
   stats$mean <- centered$center
   stats$index_of_dispersion <- stats$variance / stats$mean
   stats$coefficient_of_variation <- sqrt(stats$variance) / stats$mean
-  stats$skewness <- get_noncentral_moments(centered$x, trend=stat_trend,
-                                           bandwidth=stat_bandwidth,
-                                           kernel=stat_kernel, moment_number=3)
+  stats$skewness <- get_noncentral_moments(centered$x, trend = stat_trend,
+                                           bandwidth = stat_bandwidth,
+                                           kernel = stat_kernel,
+                                           moment_number = 3)
   stats$skewness <- stats$skewness$smooth / stats$variance ^ (3 / 2)
-  stats$kurtosis <- get_noncentral_moments(centered$x, trend=stat_trend,
-                                           bandwidth=stat_bandwidth,
-                                           kernel=stat_kernel, moment_number=4)
+  stats$kurtosis <- get_noncentral_moments(centered$x, trend = stat_trend,
+                                           bandwidth = stat_bandwidth,
+                                           kernel = stat_kernel,
+                                           moment_number = 4)
   stats$kurtosis <- stats$kurtosis$smooth / stats$variance ^ 2
   stats$kurtosis[stats$kurtosis < 0] <- 0
 
   taus <- lapply(stats, get_tau)
-  ret <- list(stats=stats, taus=taus, centered=centered, stat_trend=stat_trend,
-              stat_kernel=stat_kernel, stat_bandwidth=stat_bandwidth, lag=lag)
+  ret <- list(stats = stats, taus = taus, centered = centered,
+              stat_trend = stat_trend, stat_kernel = stat_kernel,
+              stat_bandwidth = stat_bandwidth, lag = lag)
   ret
 }
 
 get_tau <- function(x){
-  stats::cor(x=seq_along(x), y=x, method="kendall", use="complete.obs")
+  stats::cor(x = seq_along(x), y = x, method = "kendall", use = "complete.obs")
 }
 
-detrend <- function(x, trend=c("grand_mean", "ensemble_means",
+detrend <- function(x, trend = c("grand_mean", "ensemble_means",
                            "local_constant", "local_linear",
                                "assume_zero"),
-                    kernel=c("gaussian", "uniform"),
-                    bandwidth=NULL){
+                    kernel = c("gaussian", "uniform"),
+                    bandwidth = NULL){
   trend <- match.arg(trend)
   kernel <- match.arg(kernel)
   x <- stats::na.fail(x)
@@ -171,15 +177,16 @@ detrend <- function(x, trend=c("grand_mean", "ensemble_means",
              || trend == "local_linear"){
     samplet <- as.integer(nrow(x))
     step <- seq(1, samplet)
-    data <- data.frame(step=step, rmn=rmn)
-    srm <- smooth(data=data, bandwidth=bandwidth, est=trend, kernel=kernel)
+    data <- data.frame(step = step, rmn = rmn)
+    srm <- smooth(data = data, bandwidth = bandwidth, est = trend,
+                  kernel = kernel)
     center <- srm$smooth
     x <- x - center
     bandwidth <- srm$bandwidth
   } else if (trend == "assume_zero"){
     center <- rep(0, nrow(x))
   }
-  list(x=x, center=center, bandwidth=bandwidth)
+  list(x = x, center = center, bandwidth = bandwidth)
 }
 
 get_wls_coefs <- function(y, x, w){
@@ -188,23 +195,23 @@ get_wls_coefs <- function(y, x, w){
     sw <- sum(w)
     b <- (sum(w * x * y) - swx * swy / sw) / (sum(w * x ^ 2) - swx ^ 2 / sw )
     a <- (sum(w * y) - b * sum(w * x)) / sw
-    c(intercept=a, slope=b)
+    c(intercept = a, slope = b)
 }
 
-smooth <- function(data, est, kernel="gaussian", bandwidth){
+smooth <- function(data, est, kernel = "gaussian", bandwidth){
   if (!is.numeric(bandwidth) || length(bandwidth) > 1) {
     stop("argument \"bandwidth\" must be provided as a single numeric value")
   } else if (bandwidth < 1){
     stop("argument \"bandwidth\" must be >= 1")
   }
-  if(kernel == "gaussian") {
-    kern <- function(ind, bw=bandwidth){
+  if (kernel == "gaussian") {
+    kern <- function(ind, bw = bandwidth){
       dist <- abs(data$step - ind) / bw
       w <- stats::dnorm(dist)
       w / sum(w)
     }
   } else {
-    kern <- function(ind, bw=bandwidth){
+    kern <- function(ind, bw = bandwidth){
       dist <- abs(data$step - ind) / bw
       w <- dist < 1
       w / sum(w)
@@ -215,18 +222,19 @@ smooth <- function(data, est, kernel="gaussian", bandwidth){
     smooth <- colSums(w * data$rmn)
   } else {
     wlm <- function(x){
-      coefs <- get_wls_coefs(y=data$rmn, x=data$step, w=w[, x])
+      coefs <- get_wls_coefs(y = data$rmn, x = data$step, w = w[, x])
       fitted <- data$step * coefs["slope"] + coefs["intercept"]
       fitted[x]
     }
     smooth <- sapply(seq_along(data$step), wlm)
   }
-  list(smooth=smooth, bandwidth=bandwidth)
+  list(smooth = smooth, bandwidth = bandwidth)
 }
 
-autocor <- function(x, cortype=c("correlation", "covariance"), lag=1,
-                    bandwidth=NULL, trend=c("local_constant", "local_linear"),
-                    kernel=c("gaussian", "uniform")){
+autocor <- function(x, cortype = c("correlation", "covariance"), lag = 1,
+                    bandwidth = NULL, trend = c("local_constant",
+                                          "local_linear"),
+                    kernel = c("gaussian", "uniform")){
   trend <- match.arg(trend)
   cortype <- match.arg(cortype)
   kernel <- match.arg(kernel)
@@ -238,21 +246,24 @@ autocor <- function(x, cortype=c("correlation", "covariance"), lag=1,
   n <- nrow(x)
   end1 <- n - lag
   start2 <- 1 + lag
-  x1 <- x[1:end1, , drop=FALSE]
-  x2 <- x[start2:n, , drop=FALSE]
+  x1 <- x[1:end1, , drop = FALSE]
+  x2 <- x[start2:n, , drop = FALSE]
   xx_lag <- rowMeans(x1 * x2)
 
   step <- seq(start2, n)
-  data <- data.frame(step=step, rmn=xx_lag)
-  xx_lag_sm <- smooth(data=data, bandwidth=bandwidth, kernel=kernel, est=trend)
+  data <- data.frame(step = step, rmn = xx_lag)
+  xx_lag_sm <- smooth(data = data, bandwidth = bandwidth, kernel = kernel,
+                      est = trend)
   if (cortype == "correlation") {
-    data <- data.frame(step=step, rmn=rowMeans(x1 * x1))
-    xx1_sm <- smooth(data=data, bandwidth=bandwidth, kernel=kernel, est=trend)
-    data <- data.frame(step=step, rmn=rowMeans(x2 * x2))
-    xx2_sm <- smooth(data=data, bandwidth=bandwidth, kernel=kernel, est=trend)
+    data <- data.frame(step = step, rmn = rowMeans(x1 * x1))
+    xx1_sm <- smooth(data = data, bandwidth = bandwidth, kernel = kernel,
+                     est = trend)
+    data <- data.frame(step = step, rmn = rowMeans(x2 * x2))
+    xx2_sm <- smooth(data = data, bandwidth = bandwidth, kernel = kernel,
+                     est = trend)
     denom <- sqrt(xx1_sm$smooth * xx2_sm$smooth)
-    ret <- list(smooth=xx_lag_sm$smooth / denom,
-                bandwidth=xx1_sm$bandwidth)
+    ret <- list(smooth = xx_lag_sm$smooth / denom,
+                bandwidth = xx1_sm$bandwidth)
   } else {
     ret <- xx_lag_sm
   }
@@ -260,9 +271,9 @@ autocor <- function(x, cortype=c("correlation", "covariance"), lag=1,
   ret
 }
 
-get_noncentral_moments <- function(x, moment_number=3, bandwidth=NULL,
-                                   trend=c("local_constant", "local_linear"),
-                                   kernel=c("gaussian", "uniform")){
+get_noncentral_moments <- function(x, moment_number = 3, bandwidth = NULL,
+                                   trend = c("local_constant", "local_linear"),
+                                   kernel = c("gaussian", "uniform")){
   trend <- match.arg(trend)
   kernel <- match.arg(kernel)
   x <- stats::na.fail(x)
@@ -272,6 +283,6 @@ get_noncentral_moments <- function(x, moment_number=3, bandwidth=NULL,
 
   xpow <- rowMeans(x ^ moment_number)
   step <- seq_along(xpow)
-  data <- data.frame(step=step, rmn=xpow)
-  smooth(data=data, bandwidth=bandwidth, kernel=kernel, est=trend)
+  data <- data.frame(step = step, rmn = xpow)
+  smooth(data = data, bandwidth = bandwidth, kernel = kernel, est = trend)
 }

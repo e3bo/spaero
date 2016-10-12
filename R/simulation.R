@@ -40,24 +40,25 @@
 #' @examples
 #'
 #' foo <- create_simulator()
-#' out <- pomp::simulate(foo, times=seq(0, 20, by=1/26))
+#' out <- pomp::simulate(foo, times = seq(0, 20, by = 1/26))
 #' out <- as(out, "data.frame")
 #' head(out)
 #'
-#' opar <- par(mfrow=c(2, 1))
-#' plot((S/N)~time, data=out, type="l")
-#' plot(cases~time, data=out, type="l")
+#' opar <- par(mfrow = c(2, 1))
+#' plot((S/N)~time, data = out, type = "l")
+#' plot(cases~time, data = out, type = "l")
 #' par(opar)
 #'
-create_simulator <- function(times=seq(0, 9), t0=min(times),
-                             process_model=c("SIR", "SIS"),
-                             transmission=c("density-dependent", "frequency-dependent"),
-                             params=c(gamma=24, mu=1 / 70, d=1 / 70, eta=1e-5,
-                                 beta=1e-4, rho=0.1, S_0=1, I_0=0, R_0=0,
-                                 N_0=1e5),
-                             covar=data.frame(gamma_t=c(0, 0), mu_t=c(0, 0),
-                                 d_t=c(0, 0), eta_t=c(0, 0), beta_t=c(0, 0),
-                                 time=c(0, 1e6))) {
+create_simulator <- function(times = seq(0, 9), t0 = min(times),
+                             process_model = c("SIR", "SIS"),
+                             transmission = c("density-dependent",
+                                 "frequency-dependent"),
+                             params = c(gamma = 24, mu = 1 / 70, d = 1 / 70,
+                                 eta = 1e-5, beta = 1e-4, rho = 0.1, S_0 = 1,
+                                 I_0 = 0, R_0 = 0, N_0 = 1e5),
+                             covar = data.frame(gamma_t = c(0, 0),
+                                 mu_t = c(0, 0), d_t = c(0, 0), eta_t = c(0, 0),
+                                 beta_t = c(0, 0), time = c(0, 1e6))) {
   process_model <- match.arg(process_model)
   transmission <- match.arg(transmission)
   if (!requireNamespace("pomp", quietly = TRUE)) {
@@ -65,34 +66,36 @@ create_simulator <- function(times=seq(0, 9), t0=min(times),
                "Please install it."),
          call. = FALSE)
   }
-  data <- data.frame(time=times, reports=NA)
-  d <- cbind(birth=c(1,1,1,1,0),
-             sdeath=c(1,1,1,1,0),
-             infection=c(1,1,1,1,0),
-             ideath=c(1,1,1,1,0),
-             recovery=c(1,1,1,1,0),
-             rdeath=c(1,1,1,1,0))
+  data <- data.frame(time = times, reports = NA)
+  d <- cbind(birth = c(1, 1, 1, 1, 0),
+             sdeath = c(1, 1, 1, 1, 0),
+             infection = c(1, 1, 1, 1, 0),
+             ideath = c(1, 1, 1, 1, 0),
+             recovery = c(1, 1, 1, 1, 0),
+             rdeath = c(1, 1, 1, 1, 0))
   if (process_model == "SIR") {
-    v <- cbind(birth=c(1,0,0,1,0),
-               sdeath=c(-1,0,0,-1,0),
-               infection=c(-1,1,0,0,0),
-               ideath=c(0,-1,0,-1,0),
-               recovery=c(0,-1,1,0,1),
-               rdeath=c(0,0,-1,-1,0))
+    v <- cbind(birth = c(1, 0, 0, 1, 0),
+               sdeath = c(-1, 0, 0, -1, 0),
+               infection = c(-1, 1, 0, 0, 0),
+               ideath = c(0, -1, 0, -1, 0),
+               recovery = c(0, -1, 1, 0, 1),
+               rdeath = c(0, 0, -1, -1, 0))
   } else {
-    v <- cbind(birth=c(1,0,0,1,0),
-               sdeath=c(-1,0,0,-1,0),
-               infection=c(-1,1,0,0,0),
-               ideath=c(0,-1,0,-1,0),
-               recovery=c(1,-1,0,0,1),
-               rdeath=c(0,0,-1,-1,0))
+    v <- cbind(birth = c(1, 0, 0, 1, 0),
+               sdeath = c(-1, 0, 0, -1, 0),
+               infection = c(-1, 1, 0, 0, 0),
+               ideath = c(0, -1, 0, -1, 0),
+               recovery = c(1, -1, 0, 0, 1),
+               rdeath = c(0, 0, -1, -1, 0))
   }
   if (transmission == "density-dependent") {
-    rprocess <- pomp::gillespie.sim(rate.fun="_transition_rates_density_dependent",
-                                    PACKAGE="spaero", v=v, d=d)
+    rprocess <- pomp::gillespie.sim(rate.fun =
+                                      "_transition_rates_density_dependent",
+                                    PACKAGE = "spaero", v = v, d = d)
   } else if (transmission == "frequency-dependent") {
-    rprocess <- pomp::gillespie.sim(rate.fun="_transition_rates_frequency_dependent",
-                                    PACKAGE="spaero", v=v, d=d)
+    rprocess <- pomp::gillespie.sim(rate.fun =
+                                      "_transition_rates_frequency_dependent",
+                                    PACKAGE = "spaero", v = v, d = d)
 
   }
   initializer <- function(params, t0, ...) {
@@ -102,21 +105,22 @@ create_simulator <- function(times=seq(0, 9), t0=min(times),
     fracs <- params[ic.names]
     x0["N"] <- params["N_0"]
     x0[comp.names] <- round(params["N_0"] * fracs / sum(fracs))
-    if(params["rho"] < 0 | params["rho"] > 1) {
-      stop("rho must be in [0, 1]", call.=FALSE)
+    if (params["rho"] < 0 | params["rho"] > 1) {
+      stop("rho must be in [0, 1]", call. = FALSE)
     }
     pos.names <- c("S_0", "I_0", "R_0", "N_0")
-    if(any(params[pos.names] < 0)) {
-      stop(paste("All", paste(pos.names, collapse=" "), "should be >= 0."),
-           call.=FALSE)
+    if (any(params[pos.names] < 0)) {
+      stop(paste("All", paste(pos.names, collapse = " "), "should be >= 0."),
+           call. = FALSE)
     }
     x0
   }
-  pomp::pomp(data=data, times="time", t0=t0, params=params, rprocess=rprocess,
-             measurement.model=reports~binom(size=cases, prob=rho),
-             covar=covar, statenames=c("S", "I", "R", "N", "cases"),
-             paramnames=c("gamma", "mu", "d", "eta", "beta", "rho", "S_0",
+  pomp::pomp(data = data, times = "time", t0 = t0, params = params,
+             rprocess = rprocess,
+             measurement.model = reports~binom(size = cases, prob = rho),
+             covar = covar, statenames = c("S", "I", "R", "N", "cases"),
+             paramnames = c("gamma", "mu", "d", "eta", "beta", "rho", "S_0",
                  "I_0", "R_0", "N_0"),
-             covarnames=c("gamma_t", "mu_t", "d_t", "eta_t", "beta_t"),
-             tcovar="time", zeronames="cases", initializer=initializer)
+             covarnames = c("gamma_t", "mu_t", "d_t", "eta_t", "beta_t"),
+             tcovar = "time", zeronames = "cases", initializer = initializer)
 }
