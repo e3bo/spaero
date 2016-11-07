@@ -153,7 +153,12 @@ get_stats <- function(x, center_trend = "grand_mean",
 }
 
 get_tau <- function(x){
-  stats::cor(x = seq_along(x), y = x, method = "kendall", use = "complete.obs")
+  if (any(is.finite(x))){
+    stats::cor(x = seq_along(x), y = x, method = "kendall",
+               use = "complete.obs")
+  } else {
+    NA
+  }
 }
 
 detrend <- function(x, trend = c("grand_mean", "ensemble_means",
