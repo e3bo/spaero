@@ -67,7 +67,9 @@ The gaussian kernel is equivalent to a standard Gaussian density
 function. The uniform kernel is an indicator function of whether
 the distance is less than 1. Thus selecting a uniform kernel with a
 bandwidth of 2 is equivalent to a sliding window of length 3 that
-is centered on the focal index.
+is centered on the focal index. In general, if n is the greatest
+integer that is less than the value of the bandwidth h, the window
+includes the n nearest values on each side of the focal index.
 
 '"local_constant"' smoothers are local means computed with the
 kernel weights. '"local_linear"' smoothers are the fitted values of
