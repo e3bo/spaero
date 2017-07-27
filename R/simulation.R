@@ -67,26 +67,26 @@ create_simulator <- function(times = seq(0, 9), t0 = min(times),
          call. = FALSE)
   }
   data <- data.frame(time = times, reports = NA)
-  d <- cbind(birth = c(1, 1, 1, 1, 0, 0),
-             sdeath = c(1, 1, 1, 1, 0, 0),
-             infection = c(1, 1, 1, 1, 0, 0),
-             ideath = c(1, 1, 1, 1, 0, 0),
-             recovery = c(1, 1, 1, 1, 0, 0),
-             rdeath = c(1, 1, 1, 1, 0, 0))
+  d <- cbind(birth = c(1, 1, 1, 1, 0, 0, 0),
+             sdeath = c(1, 1, 1, 1, 0, 0, 0),
+             infection = c(1, 1, 1, 1, 0, 0, 0),
+             ideath = c(1, 1, 1, 1, 0, 0, 0),
+             recovery = c(1, 1, 1, 1, 0, 0, 0),
+             rdeath = c(1, 1, 1, 1, 0, 0, 0))
   if (process_model == "SIR") {
-    v <- cbind(birth = c(1, 0, 0, 1, 0, 0),
-               sdeath = c(-1, 0, 0, -1, 0, 0),
-               infection = c(-1, 1, 0, 0, 0, 1),
-               ideath = c(0, -1, 0, -1, 0, 0),
-               recovery = c(0, -1, 1, 0, 1, 0),
-               rdeath = c(0, 0, -1, -1, 0, 0))
+    v <- cbind(birth = c(1, 0, 0, 1, 0, 0, 0),
+               sdeath = c(-1, 0, 0, -1, 0, 0, 0),
+               infection = c(-1, 1, 0, 0, 0, 1, 0),
+               ideath = c(0, -1, 0, -1, 0, 0, 1),
+               recovery = c(0, -1, 1, 0, 1, 0, 0),
+               rdeath = c(0, 0, -1, -1, 0, 0, 0))
   } else {
-    v <- cbind(birth = c(1, 0, 0, 1, 0, 0),
-               sdeath = c(-1, 0, 0, -1, 0, 0),
-               infection = c(-1, 1, 0, 0, 0, 1),
-               ideath = c(0, -1, 0, -1, 0, 0),
-               recovery = c(1, -1, 0, 0, 1, 0),
-               rdeath = c(0, 0, -1, -1, 0, 0))
+    v <- cbind(birth = c(1, 0, 0, 1, 0, 0, 0),
+               sdeath = c(-1, 0, 0, -1, 0, 0, 0),
+               infection = c(-1, 1, 0, 0, 0, 1, 0),
+               ideath = c(0, -1, 0, -1, 0, 0, 1),
+               recovery = c(1, -1, 0, 0, 1, 0, 0),
+               rdeath = c(0, 0, -1, -1, 0, 0, 0))
   }
   if (transmission == "density-dependent") {
     rprocess <- pomp::gillespie.sim(rate.fun =
@@ -99,9 +99,10 @@ create_simulator <- function(times = seq(0, 9), t0 = min(times),
 
   }
   initializer <- function(params, t0, ...) {
+    browser()
     comp.names <- c("S", "I", "R")
     ic.names <- c("S_0", "I_0", "R_0")
-    x0 <- stats::setNames(numeric(6), c("S", "I", "R", "N", "cases", "transmissions"))
+    x0 <- stats::setNames(numeric(7), c("S", "I", "R", "N", "cases", "transmissions", "deathsI"))
     fracs <- params[ic.names]
     x0["N"] <- params["N_0"]
     x0[comp.names] <- round(params["N_0"] * fracs / sum(fracs))
@@ -118,9 +119,9 @@ create_simulator <- function(times = seq(0, 9), t0 = min(times),
   pomp::pomp(data = data, times = "time", t0 = t0, params = params,
              rprocess = rprocess,
              measurement.model = reports~binom(size = cases, prob = rho),
-             covar = covar, statenames = c("S", "I", "R", "N", "cases", "transmissions"),
+             covar = covar, statenames = c("S", "I", "R", "N", "cases", "transmissions", "deathsI"),
              paramnames = c("gamma", "mu", "d", "eta", "beta", "rho", "S_0",
                  "I_0", "R_0", "N_0"),
              covarnames = c("gamma_t", "mu_t", "d_t", "eta_t", "beta_t"),
-             tcovar = "time", zeronames = c("cases", "transmissions"), initializer = initializer)
+             tcovar = "time", zeronames = c("cases", "transmissions", "deathsI"), initializer = initializer)
 }
