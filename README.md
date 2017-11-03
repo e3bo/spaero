@@ -3,6 +3,7 @@
 
 [![Travis CI Build Status](https://travis-ci.org/e3bo/spaero.svg?branch=master)](https://travis-ci.org/e3bo/spaero)
 [![Coverage Status](https://img.shields.io/codecov/c/github/e3bo/spaero/master.svg)](https://codecov.io/github/e3bo/spaero?branch=master)
+[![CRAN Status](https://www.r-pkg.org/badges/version/spaero)](https://cran.r-project.org/package=spaero)
 
 ## Overview
 
