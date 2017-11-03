@@ -13,6 +13,7 @@ Imports:
 License: GPL (>= 2)
 LazyData: true
 Suggests:
+    covr (>= 3.0.0),
     earlywarnings (>= 1.0.59),
     knitr (>= 1.11),
     np (>= 0.60.2),
