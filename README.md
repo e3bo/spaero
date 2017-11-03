@@ -1,6 +1,10 @@
 
 # spaero
 
+[![Build Status](https://travis-ci.org/e3bo/spaero.svg?branch=master)](https://travis-ci.org/e3bo/spaero)
+
+## Overview
+
 `spaero` is being developed to support the work of researchers working
 on [Project AERO](https://daphnia.ecology.uga.edu/midas/). `spaero` is
 publicly available in part to disseminate and increase the
