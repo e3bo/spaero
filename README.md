@@ -25,7 +25,7 @@ devtools::install_github("e3bo/spaero")
 
 ## Documentation
 
-After installation, a listing of the avaiable documentation can be obtained:
+After installation, a listing of the available documentation can be obtained:
 
 ```r
 help(package = "spaero")
