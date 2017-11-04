@@ -4,9 +4,10 @@
 \alias{get_stats}
 \title{Get estimates of time-dependent properties of models.}
 \usage{
-get_stats(x, center_trend = "grand_mean", center_kernel = "gaussian",
-  center_bandwidth = NULL, stat_trend = "local_constant",
-  stat_kernel = "uniform", stat_bandwidth = NULL, lag = 1)
+get_stats(x, center_trend = "grand_mean", center_kernel = c("gaussian",
+  "uniform"), center_bandwidth = NULL, stat_trend = c("local_constant",
+  "local_linear"), stat_kernel = c("uniform", "gaussian"),
+  stat_bandwidth = NULL, lag = 1, backward_only = FALSE)
 }
 \arguments{
 \item{x}{A univariate or multivariate numeric time series object or
@@ -18,7 +19,8 @@ the trend to subtract. Allowed values are '"assume_zero"',
 '"local_linear"'. Will be partially matched.}
 
 \item{center_kernel}{Character string giving the kernel for any
-local detrending. Allowed values are '"gaussian"' and '"uniform"'.}
+local detrending. Allowed values are '"gaussian"' and
+'"uniform"'.}
 
 \item{center_bandwidth}{Bandwith of kernel for any local detrending
 done. A numeric value >= 1.}
@@ -28,26 +30,31 @@ estimates. Allowed values are '"local_constant"', and
 '"local_linear"'. Will be partially matched.}
 
 \item{stat_kernel}{Character string giving the kernel for local
-smoothing of estimates. Allowed values are '"gaussian"'
-and '"uniform"'.}
+smoothing of estimates. Allowed values are '"gaussian"' and
+'"uniform"'.}
 
 \item{stat_bandwidth}{Bandwith of kernel for local smoothing of
 estimates.  A numeric value >= 1.}
 
 \item{lag}{Integer lag at which to calculate the acf. This lag is
 in terms of the index of \code{x} and does not account for the
-frequency of \code{x} if \code{x} is a time series. It should be
-non-negative.}
+frequency of \code{x} if \code{x} is a time series. It should
+be non-negative.}
+
+\item{backward_only}{Logical value (defaulting to 'FALSE') that
+determines whether any uniform smoothing kernels are restricted
+to using data before the index of the smoothed estimate.}
 }
 \value{
 A list with elements '"stats"', '"taus"', '"centered"',
-'"stat_trend"', '"stat_kernel"', '"stat_bandwidth"', and
-'"lag"'. "stats" is a list containg vectors of the
-estimates. '"taus"' is a list containg Kendall's correlation
-coefficient of each element of '"stats"' with time. '"centered"' is
-a list of the detrended time series, the trend subtracted, and the
-bandwidth used in the detrending. The other elements record the
-parameters provided to this function for future reference.
+    '"stat_trend"', '"stat_kernel"', '"stat_bandwidth"', and
+    '"lag"'. "stats" is a list containg vectors of the
+    estimates. '"taus"' is a list containg Kendall's correlation
+    coefficient of each element of '"stats"' with
+    time. '"centered"' is a list of the detrended time series, the
+    trend subtracted, and the bandwidth used in the detrending. The
+    other elements record the parameters provided to this function
+    for future reference.
 }
 \description{
 \code{get_stats} estimates time-dependent properties of models

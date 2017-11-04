@@ -30,35 +30,40 @@
 #' used for each estimate.
 #'
 #' @param x A univariate or multivariate numeric time series object or
-#' a numeric vector or matrix.
+#'     a numeric vector or matrix.
 #' @param center_trend Character string giving method of calculating
-#' the trend to subtract. Allowed values are '"assume_zero"',
-#' '"grand_mean"', '"ensemble_means"', '"local_constant"', and
-#' '"local_linear"'. Will be partially matched.
+#'     the trend to subtract. Allowed values are '"assume_zero"',
+#'     '"grand_mean"', '"ensemble_means"', '"local_constant"', and
+#'     '"local_linear"'. Will be partially matched.
 #' @param center_kernel Character string giving the kernel for any
-#' local detrending. Allowed values are '"gaussian"' and '"uniform"'.
+#'     local detrending. Allowed values are '"gaussian"' and
+#'     '"uniform"'.
 #' @param center_bandwidth Bandwith of kernel for any local detrending
-#' done. A numeric value >= 1.
+#'     done. A numeric value >= 1.
 #' @param stat_trend Character string giving method of smoothing
-#' estimates. Allowed values are '"local_constant"', and
-#' '"local_linear"'. Will be partially matched.
+#'     estimates. Allowed values are '"local_constant"', and
+#'     '"local_linear"'. Will be partially matched.
 #' @param stat_kernel Character string giving the kernel for local
-#' smoothing of estimates. Allowed values are '"gaussian"'
-#' and '"uniform"'.
+#'     smoothing of estimates. Allowed values are '"gaussian"' and
+#'     '"uniform"'.
 #' @param stat_bandwidth Bandwith of kernel for local smoothing of
-#' estimates.  A numeric value >= 1.
+#'     estimates.  A numeric value >= 1.
 #' @param lag Integer lag at which to calculate the acf. This lag is
-#' in terms of the index of \code{x} and does not account for the
-#' frequency of \code{x} if \code{x} is a time series. It should be
-#' non-negative.
+#'     in terms of the index of \code{x} and does not account for the
+#'     frequency of \code{x} if \code{x} is a time series. It should
+#'     be non-negative.
+#' @param backward_only Logical value (defaulting to 'FALSE') that
+#'     determines whether any uniform smoothing kernels are restricted
+#'     to using data before the index of the smoothed estimate.
 #' @return A list with elements '"stats"', '"taus"', '"centered"',
-#' '"stat_trend"', '"stat_kernel"', '"stat_bandwidth"', and
-#' '"lag"'. "stats" is a list containg vectors of the
-#' estimates. '"taus"' is a list containg Kendall's correlation
-#' coefficient of each element of '"stats"' with time. '"centered"' is
-#' a list of the detrended time series, the trend subtracted, and the
-#' bandwidth used in the detrending. The other elements record the
-#' parameters provided to this function for future reference.
+#'     '"stat_trend"', '"stat_kernel"', '"stat_bandwidth"', and
+#'     '"lag"'. "stats" is a list containg vectors of the
+#'     estimates. '"taus"' is a list containg Kendall's correlation
+#'     coefficient of each element of '"stats"' with
+#'     time. '"centered"' is a list of the detrended time series, the
+#'     trend subtracted, and the bandwidth used in the detrending. The
+#'     other elements record the parameters provided to this function
+#'     for future reference.
 #'
 #' @seealso \code{\link{acf}}, \code{\link{var}},
 #' \code{\link[moments]{kurtosis}}, and
@@ -101,23 +106,30 @@
 #' xdynamic <- wt * xhi + (1 - wt) * x
 #' get_stats(xdynamic, stat_bandwidth = 100)$stats$autocor
 get_stats <- function(x, center_trend = "grand_mean",
-                      center_kernel = "gaussian", center_bandwidth = NULL,
-                      stat_trend = "local_constant", stat_kernel = "uniform",
-                      stat_bandwidth = NULL, lag = 1){
+                      center_kernel = c("gaussian", "uniform"),
+                      center_bandwidth = NULL,
+                      stat_trend = c("local_constant", "local_linear"),
+                      stat_kernel = c("uniform", "gaussian"),
+                      stat_bandwidth = NULL, lag = 1, backward_only = FALSE){
+  center_kernel <- match.arg(center_kernel)
+  stat_kernel <- match.arg(stat_kernel)
+  stat_trend <- match.arg(stat_trend)
   centered <- detrend(x, trend = center_trend, kernel = center_kernel,
-                      bandwidth = center_bandwidth)
+                      bandwidth = center_bandwidth,
+                      backward_only = backward_only)
   stats <- list()
-  stats$variance <- get_noncentral_moments(centered$x, trend = stat_trend,
+  stats$variance <- get_noncentral_moments(centered$x, moment_number = 2,
+                                           est = stat_trend,
                                            kernel = stat_kernel,
                                            bandwidth = stat_bandwidth,
-                                           moment_number = 2)
+                                           backward_only = backward_only)
   stats$variance <- stats$variance$smooth
   stats$variance[stats$variance < 0] <- 0
   stats$variance_first_diff <- c(NA, diff(stats$variance))
-  stats$autocovariance <- autocor(centered$x, trend = stat_trend,
-                                  kernel = stat_kernel,
+  stats$autocovariance <- autocor(centered$x, cortype = "covariance", lag = lag,
+                                  est = stat_trend, kernel = stat_kernel,
                                   bandwidth = stat_bandwidth,
-                                  cortype = "covariance", lag = lag)
+                                  backward_only = backward_only)
   stats$autocovariance <- stats$autocovariance$smooth
   if (lag > 0) {
       denom <- stats$variance[-seq_len(lag)]
@@ -135,15 +147,17 @@ get_stats <- function(x, center_trend = "grand_mean",
   stats$mean <- centered$center
   stats$index_of_dispersion <- stats$variance / stats$mean
   stats$coefficient_of_variation <- sqrt(stats$variance) / stats$mean
-  stats$skewness <- get_noncentral_moments(centered$x, trend = stat_trend,
-                                           bandwidth = stat_bandwidth,
+  stats$skewness <- get_noncentral_moments(centered$x, moment_number = 3,
+                                           est = stat_trend,
                                            kernel = stat_kernel,
-                                           moment_number = 3)
+                                           bandwidth = stat_bandwidth,
+                                           backward_only = backward_only)
   stats$skewness <- stats$skewness$smooth / stats$variance ^ (3 / 2)
-  stats$kurtosis <- get_noncentral_moments(centered$x, trend = stat_trend,
-                                           bandwidth = stat_bandwidth,
+  stats$kurtosis <- get_noncentral_moments(centered$x, moment_number = 4,
+                                           est = stat_trend,
                                            kernel = stat_kernel,
-                                           moment_number = 4)
+                                           bandwidth = stat_bandwidth,
+                                           backward_only = backward_only)
   stats$kurtosis <- stats$kurtosis$smooth / stats$variance ^ 2
   stats$kurtosis[stats$kurtosis < 0] <- 0
 
@@ -164,12 +178,9 @@ get_tau <- function(x){
 }
 
 detrend <- function(x, trend = c("grand_mean", "ensemble_means",
-                           "local_constant", "local_linear",
-                               "assume_zero"),
-                    kernel = c("gaussian", "uniform"),
-                    bandwidth = NULL){
+                                 "local_constant", "local_linear",
+                               "assume_zero"), bandwidth = NULL, ...){
   trend <- match.arg(trend)
-  kernel <- match.arg(kernel)
   x <- stats::na.fail(x)
   x <- as.matrix(x)
   if (!is.numeric(x)) stop("'x' must be numeric")
@@ -185,8 +196,7 @@ detrend <- function(x, trend = c("grand_mean", "ensemble_means",
     samplet <- as.integer(nrow(x))
     step <- seq(1, samplet)
     data <- data.frame(step = step, rmn = rmn)
-    srm <- smooth(data = data, bandwidth = bandwidth, est = trend,
-                  kernel = kernel)
+    srm <- smooth(data = data, bandwidth = bandwidth, est = trend, ...)
     center <- srm$smooth
     x <- x - center
     bandwidth <- srm$bandwidth
@@ -205,7 +215,8 @@ get_wls_coefs <- function(y, x, w){
     c(intercept = a, slope = b)
 }
 
-smooth <- function(data, est, kernel = "gaussian", bandwidth){
+smooth <- function(data, est, kernel = "gaussian", bandwidth,
+                   backward_only = FALSE){
   if (!is.numeric(bandwidth) || length(bandwidth) > 1) {
     stop("argument \"bandwidth\" must be provided as a single numeric value")
   } else if (bandwidth < 1){
@@ -218,9 +229,13 @@ smooth <- function(data, est, kernel = "gaussian", bandwidth){
       w / sum(w)
     }
   } else {
-    kern <- function(ind, bw = bandwidth){
-      dist <- abs(data$step - ind) / bw
-      w <- dist < 1
+    kern <- function(ind, bw = bandwidth, back = backward_only){
+      dist <- (data$step - ind) / bw
+      if (back) {
+          w <- dist < 1 & dist > 0
+      } else {
+          w <- dist < 1 & dist > -1
+      }
       w / sum(w)
     }
   }
@@ -238,13 +253,8 @@ smooth <- function(data, est, kernel = "gaussian", bandwidth){
   list(smooth = smooth, bandwidth = bandwidth)
 }
 
-autocor <- function(x, cortype = c("correlation", "covariance"), lag = 1,
-                    bandwidth = NULL,
-                    trend = c("local_constant", "local_linear"),
-                    kernel = c("gaussian", "uniform")){
-  trend <- match.arg(trend)
+autocor <- function(x, cortype = c("correlation", "covariance"), lag = 1, ...){
   cortype <- match.arg(cortype)
-  kernel <- match.arg(kernel)
   x <- stats::na.fail(x)
   x <- as.matrix(x)
   if (!is.numeric(x)) stop("'x' must be numeric")
@@ -259,15 +269,12 @@ autocor <- function(x, cortype = c("correlation", "covariance"), lag = 1,
 
   step <- seq(start2, n)
   data <- data.frame(step = step, rmn = xx_lag)
-  xx_lag_sm <- smooth(data = data, bandwidth = bandwidth, kernel = kernel,
-                      est = trend)
+  xx_lag_sm <- smooth(data = data, ...)
   if (cortype == "correlation") {
     data <- data.frame(step = step, rmn = rowMeans(x1 * x1))
-    xx1_sm <- smooth(data = data, bandwidth = bandwidth, kernel = kernel,
-                     est = trend)
+    xx1_sm <- smooth(data = data, ...)
     data <- data.frame(step = step, rmn = rowMeans(x2 * x2))
-    xx2_sm <- smooth(data = data, bandwidth = bandwidth, kernel = kernel,
-                     est = trend)
+    xx2_sm <- smooth(data = data, ...)
     denom <- sqrt(xx1_sm$smooth * xx2_sm$smooth)
     ret <- list(smooth = xx_lag_sm$smooth / denom,
                 bandwidth = xx1_sm$bandwidth)
@@ -278,11 +285,7 @@ autocor <- function(x, cortype = c("correlation", "covariance"), lag = 1,
   ret
 }
 
-get_noncentral_moments <- function(x, moment_number = 3, bandwidth = NULL,
-                                   trend = c("local_constant", "local_linear"),
-                                   kernel = c("gaussian", "uniform")){
-  trend <- match.arg(trend)
-  kernel <- match.arg(kernel)
+get_noncentral_moments <- function(x, moment_number = 3, ...) {
   x <- stats::na.fail(x)
   x <- as.matrix(x)
   if (!is.numeric(x)) stop("'x' must be numeric")
@@ -291,5 +294,5 @@ get_noncentral_moments <- function(x, moment_number = 3, bandwidth = NULL,
   xpow <- rowMeans(x ^ moment_number)
   step <- seq_along(xpow)
   data <- data.frame(step = step, rmn = xpow)
-  smooth(data = data, bandwidth = bandwidth, kernel = kernel, est = trend)
+  smooth(data = data, ...)
 }
