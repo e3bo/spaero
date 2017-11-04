@@ -124,6 +124,17 @@ test_that("large bandwidth autocor estimates agree with acf", {
 
 context("expected use of get_stats")
 
+test_that("lag-0 results are sensible", {
+  bw <- 10
+  n <- 100
+  x <- rnorm(n)
+  sp <- get_stats(x, center_kernel = "uniform", center_trend = "local_constant",
+                  center_bandwidth = bw, stat_bandwidth = bw,
+                  stat_kernel = "uniform", lag = 0)
+  expect_equal(sp$stats$autocovariance, sp$stats$variance)
+  expect_equal(sp$stats$autocorrelation, rep(1, n))
+})
+
 test_that(paste("estimate of ensemble stats consistent",
                 "in case of time-dependent AR(1) model"), {
   make_time_dependent_updater <- function(f) {

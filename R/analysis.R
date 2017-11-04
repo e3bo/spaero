@@ -50,7 +50,7 @@
 #' @param lag Integer lag at which to calculate the acf. This lag is
 #' in terms of the index of \code{x} and does not account for the
 #' frequency of \code{x} if \code{x} is a time series. It should be
-#' positive.
+#' non-negative.
 #' @return A list with elements '"stats"', '"taus"', '"centered"',
 #' '"stat_trend"', '"stat_kernel"', '"stat_bandwidth"', and
 #' '"lag"'. "stats" is a list containg vectors of the
@@ -239,8 +239,8 @@ smooth <- function(data, est, kernel = "gaussian", bandwidth){
 }
 
 autocor <- function(x, cortype = c("correlation", "covariance"), lag = 1,
-                    bandwidth = NULL, trend = c("local_constant",
-                                          "local_linear"),
+                    bandwidth = NULL,
+                    trend = c("local_constant", "local_linear"),
                     kernel = c("gaussian", "uniform")){
   trend <- match.arg(trend)
   cortype <- match.arg(cortype)

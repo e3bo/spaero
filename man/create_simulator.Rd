@@ -71,4 +71,3 @@ par(opar)
 \seealso{
 \code{\link[pomp]{pomp}} for documentation of pomp objects
 }
-
