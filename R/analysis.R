@@ -217,7 +217,7 @@ get_wls_coefs <- function(y, x, w){
 
 smooth <- function(data, est, kernel = "gaussian", bandwidth,
                    backward_only = FALSE){
-  if (!is.numeric(bandwidth) || length(bandwidth) > 1) {
+  if (!is.numeric(bandwidth) || length(bandwidth) != 1) {
     stop("argument \"bandwidth\" must be provided as a single numeric value")
   } else if (bandwidth < 1){
     stop("argument \"bandwidth\" must be >= 1")
@@ -229,10 +229,10 @@ smooth <- function(data, est, kernel = "gaussian", bandwidth,
       w / sum(w)
     }
   } else {
-    kern <- function(ind, bw = bandwidth, back = backward_only){
+    kern <- function(ind, bw = bandwidth){
       dist <- (data$step - ind) / bw
-      if (back) {
-          w <- dist < 1 & dist > 0
+      if (backward_only) {
+          w <- dist <= 0 & dist > -1
       } else {
           w <- dist < 1 & dist > -1
       }

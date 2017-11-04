@@ -300,10 +300,22 @@ test_that(paste("Estimate of stats consistent with other methods",
   sp <- get_stats(diff(so[, "reports"]), center_kernel = "uniform",
                   center_trend = "local_constant", center_bandwidth = bw,
                   stat_bandwidth = bw, stat_kernel = "uniform")
+  mw <- 2 * (bw - 1) + 1
+  spbw <- get_stats(diff(so[, "reports"]), center_kernel = "uniform",
+                    center_trend = "local_constant", center_bandwidth = mw,
+                    stat_bandwidth = mw, stat_kernel = "uniform",
+                    backward_only = TRUE)
   ew <- earlywarnings::generic_ews(diff(so[, "reports"]),
-                                   winsize = 2 * bw / n * 100,
+                                   winsize = mw / n * 100,
                                    detrending = "no")
   spm <- lapply(sp$stats, function(x) x[(bw):(n - bw)])
+  spbwm <- lapply(spbw$stats, function(x) x[-seq_len(mw - 1)])
+  expect_equal(spm$mean, spbwm$mean)
+  expect_equal(as.data.frame(spm), as.data.frame(spbwm), tolerance = 0.05)
+
+  ## windows sizes and hence output lengths mismatch due to rounding
+  ## inside generic_ews
+  ew <- ew[ew$timeindex > mw - 1, ]
 
   expect_equal(ew$acf1, spm$autocorrelation, tolerance = 0.01)
   expect_equal(ew$sd, sqrt(spm$variance), tolerance = 0.01)
