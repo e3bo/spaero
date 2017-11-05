@@ -20,7 +20,7 @@ eradication of infectious diseases. The spearo package will be
 developed to further support statistical methods to anticipate
 critical transitions in infectious disease systems. Because these
 methods will be based on generic properties of dynamical systems, they
-have the potential to apply to a broad range of models.  Spearo also
+have the potential to apply to a broad range of models.  spearo also
 provides functions to support computational experiments designed to
 evaluate these methods for applications relevant to infectious disease
 systems. This document provides a rudimentary demonstration of the
@@ -181,14 +181,14 @@ interested in this type of analysis can find guidelines in
 @dakos_methods_2012 and may also want to consider performing it with
 the \texttt{generic\_ews} function in the earlywarnings package
 described in that paper. We'll next review the input parameters and
-implementation of get_stats.
+implementation of \texttt{get_stats}.
 
 Two key parameters that the user must provide to \texttt{get\_stats}
 are the shape and size of the rolling window. There is a rolling
-window for an estimate of the mean and for an estimate of statistics
+window for an estimate of the mean and for an estimate of moments
 within the window. Arguments controlling these windows are prefixed
-with "center_" and "stat_" respectively. An estimate of the mean
-is necessary because the calculations of the statistics involve
+with "center_" and "stat_" respectively. An estimate of the mean is
+necessary because the calculations of the statistics involve
 deviations from the mean. \texttt{get\_stats} supports estimation of
 the mean via several methods and users may also estimate the mean
 using other methods, subtract it from the input time series, and then
@@ -206,10 +206,16 @@ plugged into a kernel function corresponding to the window type. For
 the gaussian window, the kernel function is a Gaussian probability
 density function with a standard deviation of one. For the rectangular
 window, the kernel function equals one if the distance is less than
-one and zero otherwise. The output of the kernel function is a weight
-for each observation. These weights are used in the estimators
-described next. Note that these bandwidth conventions are different
-from those of \texttt{generic\_ews}.
+one and zero otherwise. The "backward_only" argument determines
+whether the rectangular window is backward-looking by controlling
+whether the kernel function is forced to zero for any indices greater
+than the window's index. In other words, "backward_only = TRUE" makes
+the rectangular window right-aligned instead of centered. The output
+of the kernel function is a weight for each observation. These weights
+are used in the estimators described next. Note that these bandwidth
+conventions are different from those of \texttt{generic\_ews}. Note
+also that only when "backward_only = TRUE" does the bandwidth
+correspond directly to the size of a moving window.
 
 By default, \texttt{get\_stats} computes statistics via weighted
 sample moments. To clarify, the estimate of the moment for the moving
