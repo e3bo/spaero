@@ -181,7 +181,7 @@ interested in this type of analysis can find guidelines in
 @dakos_methods_2012 and may also want to consider performing it with
 the \texttt{generic\_ews} function in the earlywarnings package
 described in that paper. We'll next review the input parameters and
-implementation of \texttt{get_stats}.
+implementation of \texttt{get\_stats}.
 
 Two key parameters that the user must provide to \texttt{get\_stats}
 are the shape and size of the rolling window. There is a rolling
