@@ -92,7 +92,7 @@ create_simulator <- function(times = seq(0, 9), t0 = min(times),
                rdeath = c(0, 0, -1, -1, 0),
                vaccination = c(0, 0, 1, 1, 0))
   }
-  is_newer_pomp <- packageVersion("pomp") >= package_version("1.15.2")
+  is_newer_pomp <- utils::packageVersion("pomp") >= package_version("1.15.2")
   if (transmission == "density-dependent") {
       if (!is_newer_pomp) {
           rprocess <- pomp::gillespie.sim(rate.fun =
