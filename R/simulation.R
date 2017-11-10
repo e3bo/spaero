@@ -92,15 +92,27 @@ create_simulator <- function(times = seq(0, 9), t0 = min(times),
                rdeath = c(0, 0, -1, -1, 0),
                vaccination = c(0, 0, 1, 1, 0))
   }
+  is_newer_pomp <- packageVersion("pomp") >= package_version("1.15.2")
   if (transmission == "density-dependent") {
-    rprocess <- pomp::gillespie.sim(rate.fun =
-                                      "_transition_rates_density_dependent",
-                                    PACKAGE = "spaero", v = v, d = d)
+      if (!is_newer_pomp) {
+          rprocess <- pomp::gillespie.sim(rate.fun =
+                                     "_transition_rates_density_dependent",
+                                          PACKAGE = "spaero", v = v, d = d)
+      } else {
+          rprocess <- pomp::gillespie.sim(rate.fun =
+                                     "_transition_rates_density_dependent",
+                                     PACKAGE = "spaero", v = v)
+      }
   } else if (transmission == "frequency-dependent") {
-    rprocess <- pomp::gillespie.sim(rate.fun =
-                                      "_transition_rates_frequency_dependent",
-                                    PACKAGE = "spaero", v = v, d = d)
-
+      if (!is_newer_pomp) {
+          rprocess <- pomp::gillespie.sim(rate.fun =
+                            "_transition_rates_frequency_dependent",
+                            PACKAGE = "spaero", v = v, d = d)
+      } else {
+          rprocess <- pomp::gillespie.sim(rate.fun =
+                            "_transition_rates_frequency_dependent",
+                            PACKAGE = "spaero", v = v)
+      }
   }
   initializer <- function(params, t0, ...) {
     comp.names <- c("S", "I", "R")
