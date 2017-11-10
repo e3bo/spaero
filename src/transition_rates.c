@@ -12,12 +12,14 @@
 #define I0          (p[parindex[7]]) // initial fraction of I
 #define R0          (p[parindex[8]]) // initial fraction of R
 #define N0          (p[parindex[9]]) // initial population size
+#define P           (p[parindex[10]]) // proportion vaccinated at birth
 
 #define GAMMA_T     (covar[covindex[0]]) // recovery rate
 #define MU_T        (covar[covindex[1]]) // birth rate
 #define D_T         (covar[covindex[2]]) // death rate
 #define ETA_T       (covar[covindex[3]]) // sparking rate
 #define BETA_T      (covar[covindex[4]]) // transmission rate
+#define P_T         (covar[covindex[5]]) // vaccination rate
 
 #define SUSC        (x[stateindex[0]]) // number of susceptibles
 #define INFD        (x[stateindex[1]]) // number of infectives
@@ -31,8 +33,8 @@ double _transition_rates_density_dependent (int j, double t, double *x, double *
   double rate = 0.0;
 
   switch (j) {
-  case 1: 			// birth
-    rate = N0 * (MU + MU_T);
+  case 1: 			// birth without vaccination
+    rate = N0 * (MU + MU_T) * (1 - (P + P_T));
     break;
   case 2:			// susceptible death
     rate = SUSC * (D + D_T);
@@ -49,6 +51,9 @@ double _transition_rates_density_dependent (int j, double t, double *x, double *
   case 6:			// recovered death
     rate = RCVD * (D + D_T);
     break;
+  case 7:                       // birth with vaccination
+    rate = N0 * (MU + MU_T) * (P + P_T);
+    break;
   default:
     error("unrecognized rate code %d",j);
     break;
@@ -62,8 +67,8 @@ double _transition_rates_frequency_dependent (int j, double t, double *x, double
   double rate = 0.0;
 
   switch (j) {
-  case 1: 			// birth
-    rate = N0 * (MU + MU_T);
+  case 1: 			// birth without vaccination
+    rate = N0 * (MU + MU_T) * (1 - (P + P_T));
     break;
   case 2:			// susceptible death
     rate = SUSC * (D + D_T);
@@ -79,6 +84,9 @@ double _transition_rates_frequency_dependent (int j, double t, double *x, double
     break;
   case 6:			// recovered death
     rate = RCVD * (D + D_T);
+    break;
+  case 7:                       // birth with vaccination
+    rate = N0 * (MU + MU_T) * (P + P_T);
     break;
   default:
     error("unrecognized rate code %d",j);

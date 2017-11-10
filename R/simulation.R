@@ -55,10 +55,11 @@ create_simulator <- function(times = seq(0, 9), t0 = min(times),
                                  "frequency-dependent"),
                              params = c(gamma = 24, mu = 1 / 70, d = 1 / 70,
                                  eta = 1e-5, beta = 1e-4, rho = 0.1, S_0 = 1,
-                                 I_0 = 0, R_0 = 0, N_0 = 1e5),
+                                 I_0 = 0, R_0 = 0, N_0 = 1e5, p = 0),
                              covar = data.frame(gamma_t = c(0, 0),
                                  mu_t = c(0, 0), d_t = c(0, 0), eta_t = c(0, 0),
-                                 beta_t = c(0, 0), time = c(0, 1e6))) {
+                                 beta_t = c(0, 0), p_t = c(0, 0),
+                                 time = c(0, 1e6))) {
   process_model <- match.arg(process_model)
   transmission <- match.arg(transmission)
   if (!requireNamespace("pomp", quietly = TRUE)) {
@@ -72,21 +73,24 @@ create_simulator <- function(times = seq(0, 9), t0 = min(times),
              infection = c(1, 1, 1, 1, 0),
              ideath = c(1, 1, 1, 1, 0),
              recovery = c(1, 1, 1, 1, 0),
-             rdeath = c(1, 1, 1, 1, 0))
+             rdeath = c(1, 1, 1, 1, 0),
+             vaccination = c(1, 1, 1, 1, 0))
   if (process_model == "SIR") {
     v <- cbind(birth = c(1, 0, 0, 1, 0),
                sdeath = c(-1, 0, 0, -1, 0),
                infection = c(-1, 1, 0, 0, 0),
                ideath = c(0, -1, 0, -1, 0),
                recovery = c(0, -1, 1, 0, 1),
-               rdeath = c(0, 0, -1, -1, 0))
+               rdeath = c(0, 0, -1, -1, 0),
+               vaccination = c(0, 0, 1, 1, 0))
   } else {
     v <- cbind(birth = c(1, 0, 0, 1, 0),
                sdeath = c(-1, 0, 0, -1, 0),
                infection = c(-1, 1, 0, 0, 0),
                ideath = c(0, -1, 0, -1, 0),
                recovery = c(1, -1, 0, 0, 1),
-               rdeath = c(0, 0, -1, -1, 0))
+               rdeath = c(0, 0, -1, -1, 0),
+               vaccination = c(0, 0, 1, 1, 0))
   }
   if (transmission == "density-dependent") {
     rprocess <- pomp::gillespie.sim(rate.fun =
@@ -120,7 +124,7 @@ create_simulator <- function(times = seq(0, 9), t0 = min(times),
              measurement.model = reports~binom(size = cases, prob = rho),
              covar = covar, statenames = c("S", "I", "R", "N", "cases"),
              paramnames = c("gamma", "mu", "d", "eta", "beta", "rho", "S_0",
-                 "I_0", "R_0", "N_0"),
-             covarnames = c("gamma_t", "mu_t", "d_t", "eta_t", "beta_t"),
+                 "I_0", "R_0", "N_0", "p"),
+             covarnames = c("gamma_t", "mu_t", "d_t", "eta_t", "beta_t", "p_t"),
              tcovar = "time", zeronames = "cases", initializer = initializer)
 }
