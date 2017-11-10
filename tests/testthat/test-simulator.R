@@ -151,3 +151,41 @@ test_that(paste("Fluctuations for large system sizes approximate AR process",
   expect_equal(sim_ac1_SI, -0.9121943, tol = 0.2)
   expect_equal(sim_ac1_SS, 0.3079941, tol = 0.2)
 })
+
+
+test_that(paste("Susceptible population dynamics match deterministic",
+                "expectations when vaccination is decreasing"), {
+  skip_if_not_installed("pomp")
+  skip_on_cran()
+
+  tcrit <- 10
+  params <- structure(c(16.59, 0.02, 0.02, 0, 332.21,
+                        0, 1e+06, 0.99, 0.00987691726812067,
+                        0, 0.990122934536821
+                        ), .Names = c("gamma", "mu", "d", "eta", "beta",
+                               "rho", "N_0", "p", "S_0", "I_0", "R_0"))
+  R0 <- params["beta"] / (params["gamma"] + params["d"])
+  k1 <- params["d"] * (1 - params["p"])
+  k3 <- -params["d"]
+  S0 <- params["S_0"] / sum(params["S_0"], params["I_0"], params["R_0"])
+  k2 <- (1 / R0 + k1 / k3 - (S0 + k1 / k3) * exp(k3 * tcrit))
+  k2 <- k2 / (exp(k3 * tcrit) / k3 ^ 2 - 1 / k3 ^ 2 - tcrit / k3)
+  dpdt <- -k2 / params["d"]
+  C1 <- S0 + k1 / k3 + k2 / k3 ^ 2
+  Sstop <- C1 * exp (k3 * tcrit) - k1 / k3 - k2 / k3 ^ 2 -k2 /k3 * tcrit
+  stopifnot(isTRUE(all.equal(Sstop, 1 / R0, check.attributes = FALSE)))
+  sol <- function(t) C1 * exp(k3 * t) - k1 / k3 - k2 / k3 ^ 2 -k2 /k3 * t
+  tstep <- 1 / 26
+  times <- seq(from = 0, to = tcrit,  by = tstep)
+  eps <- .Machine$double.eps
+  tzero <- -params["p"] / dpdt
+  p_t <- c(0, -params["p"] + eps, -params["p"] + eps)
+
+  covar <- data.frame(gamma_t = 0, mu_t = 0, d_t = 0, eta_t = 0,
+                      beta_t = 0, p_t = p_t,
+                      time = c(0, tzero, max(c(tzero, times))))
+  create_simulator(times = times, t0 = 0, transmission = "frequency-dependent",
+                   params = params, covar = covar) -> sim
+  out <- pomp::simulate(sim, as.data.frame = TRUE)
+  expect_equal(out$S , sol(times) * params["N_0"], tol = 0.01)
+})
