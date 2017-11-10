@@ -1,6 +1,4 @@
-#include <R.h>
-#include <Rmath.h>
-#include <Rinternals.h>
+#include "spaero_internal.h"
 
 #define GAMMA       (p[parindex[0]]) // recovery rate
 #define MU          (p[parindex[1]]) // birth rate
