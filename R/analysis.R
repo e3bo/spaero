@@ -118,6 +118,10 @@ get_stats <- function(x, center_trend = "grand_mean",
                       bandwidth = center_bandwidth,
                       backward_only = backward_only)
   stats <- list()
+  
+  f1 <- function(n) return(rep(1, length.out = n))
+  f2 <- function(n) return(seq(from = 1, to = n) - n / 2)
+  stats$ai_values <- custom_fitTDAR(y = x, f1, f2)
   stats$variance <- get_noncentral_moments(centered$x, moment_number = 2,
                                            est = stat_trend,
                                            kernel = stat_kernel,
@@ -295,4 +299,33 @@ get_noncentral_moments <- function(x, moment_number = 3, ...) {
   step <- seq_along(xpow)
   data <- data.frame(step = step, rmn = xpow)
   smooth(data = data, ...)
+}
+
+custom_fitTDAR <- function(y, ...) {
+  ## use Eq. 12 in BMC Bioinformatics 2008, 9(Suppl 9):S14
+  basis_functions <- list(...)
+  
+  # First, we actually get the coefficients
+  N <- length(y)
+  F <- matrix(nrow = N, ncol = length(basis_functions))
+  for (i in 1:length(basis_functions)) {
+    F[ , i] <- basis_functions[[i]](N)
+  }
+  U <- as.numeric(y) * F
+  Phi <- U[-N, ]
+  x <- y[-1]
+  theta <- solve(t(Phi) %*% Phi) %*% t(Phi) %*% x
+  
+  # Second, now that we have the coefficients, we
+  # extend the basis functions.
+  
+  bf_matrix <- matrix(nrow = N, ncol = length(basis_functions))
+  
+  for (i in 1:length(basis_functions)) {
+    bf_matrix[ , i] <- basis_functions[[i]](N)*as.numeric(theta[i])
+  }
+  
+  ai_values <- rowSums(x = bf_matrix)
+  
+  return(ai_values)
 }
