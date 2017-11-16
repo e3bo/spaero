@@ -10,7 +10,7 @@ Depends:
     R (>= 3.2.1)
 Imports:
     stats
-License: GPL (>= 2)
+License: GPL (>= 2) | file LICENSE
 LazyData: true
 Suggests:
     covr (>= 3.0.0),
