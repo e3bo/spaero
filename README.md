@@ -46,6 +46,9 @@ Feature requests are also welcome but be forewarned that we have
 limited time to work on items not directly supporting the project's
 research.
 
+More details about contribution may be found in the
+[contributing guidelines](CONTRIBUTING.md).
+
 ## License
 
 GNU GPL version 2 or later
