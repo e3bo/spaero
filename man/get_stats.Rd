@@ -22,7 +22,7 @@ the trend to subtract. Allowed values are '"assume_zero"',
 local detrending. Allowed values are '"gaussian"' and
 '"uniform"'.}
 
-\item{center_bandwidth}{Bandwith of kernel for any local detrending
+\item{center_bandwidth}{Bandwidth of kernel for any local detrending
 done. A numeric value >= 1.}
 
 \item{stat_trend}{Character string giving method of smoothing
@@ -33,7 +33,7 @@ estimates. Allowed values are '"local_constant"', and
 smoothing of estimates. Allowed values are '"gaussian"' and
 '"uniform"'.}
 
-\item{stat_bandwidth}{Bandwith of kernel for local smoothing of
+\item{stat_bandwidth}{Bandwidth of kernel for local smoothing of
 estimates.  A numeric value >= 1.}
 
 \item{lag}{Integer lag at which to calculate the acf. This lag is
@@ -48,8 +48,8 @@ to using data before the index of the smoothed estimate.}
 \value{
 A list with elements '"stats"', '"taus"', '"centered"',
     '"stat_trend"', '"stat_kernel"', '"stat_bandwidth"', and
-    '"lag"'. "stats" is a list containg vectors of the
-    estimates. '"taus"' is a list containg Kendall's correlation
+    '"lag"'. "stats" is a list containing vectors of the
+    estimates. '"taus"' is a list containing Kendall's correlation
     coefficient of each element of '"stats"' with
     time. '"centered"' is a list of the detrended time series, the
     trend subtracted, and the bandwidth used in the detrending. The
