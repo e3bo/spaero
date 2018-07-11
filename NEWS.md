@@ -1,3 +1,13 @@
+# spaero 0.3.0
+
+- Add vaccination reaction to simulator. A vaccination rate of zero
+  remains the default parameter setting.
+
+- Add backward-looking window option for get_stats.
+
+- Avoid errors when input time series is constant and return a missing
+  value instead.
+
 # spaero 0.2.0
 
 - Add transmission argument to create_simulator to allow for
