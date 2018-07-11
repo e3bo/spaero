@@ -288,4 +288,16 @@ That concludes our initial overview of the package. The current
 version of spaero is just a starting point and the package will
 continue to be actively developed for the foreseeable future.
 
+## Funding
+
+The development of this package was supported by the National
+Institute of General Medical Sciences of the National Institutes of
+Health under Award Number U01GM110744.
+
+## Disclaimer
+
+The content is solely the responsibility of the authors and does not
+necessarily reflect the official views of the National Institutes of
+Health.
+
 ## References
