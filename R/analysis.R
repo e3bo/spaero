@@ -38,7 +38,7 @@
 #' @param center_kernel Character string giving the kernel for any
 #'     local detrending. Allowed values are '"gaussian"' and
 #'     '"uniform"'.
-#' @param center_bandwidth Bandwith of kernel for any local detrending
+#' @param center_bandwidth Bandwidth of kernel for any local detrending
 #'     done. A numeric value >= 1.
 #' @param stat_trend Character string giving method of smoothing
 #'     estimates. Allowed values are '"local_constant"', and
@@ -46,7 +46,7 @@
 #' @param stat_kernel Character string giving the kernel for local
 #'     smoothing of estimates. Allowed values are '"gaussian"' and
 #'     '"uniform"'.
-#' @param stat_bandwidth Bandwith of kernel for local smoothing of
+#' @param stat_bandwidth Bandwidth of kernel for local smoothing of
 #'     estimates.  A numeric value >= 1.
 #' @param lag Integer lag at which to calculate the acf. This lag is
 #'     in terms of the index of \code{x} and does not account for the
@@ -57,8 +57,8 @@
 #'     to using data before the index of the smoothed estimate.
 #' @return A list with elements '"stats"', '"taus"', '"centered"',
 #'     '"stat_trend"', '"stat_kernel"', '"stat_bandwidth"', and
-#'     '"lag"'. "stats" is a list containg vectors of the
-#'     estimates. '"taus"' is a list containg Kendall's correlation
+#'     '"lag"'. "stats" is a list containing vectors of the
+#'     estimates. '"taus"' is a list containing Kendall's correlation
 #'     coefficient of each element of '"stats"' with
 #'     time. '"centered"' is a list of the detrended time series, the
 #'     trend subtracted, and the bandwidth used in the detrending. The

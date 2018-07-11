@@ -7,7 +7,7 @@
 #' See the vignette "Getting Started with spaero" for a description of
 #' the model. The "params" argument must include all model
 #' parameters. These will become the default parameters for the model
-#' object. They can be overriden when the simulation is run via the
+#' object. They can be overridden when the simulation is run via the
 #' "params" argument of \code{pomp::simulate}. The case is the same
 #' for the "times" argument. The "covar" argument should be a data
 #' frame with a column named for each of the time-dependent parameters
@@ -26,7 +26,7 @@
 #' variable set to the initial conditions specified via params.
 #' @param process_model Character string giving the process
 #' model. Allowed values are '"SIR"' and '"SIS"'.
-#' @param transmission Character string decribing the transmission
+#' @param transmission Character string describing the transmission
 #' model. Allowed values are '"density-dependent"' and
 #' '"frequency-dependent"'.
 #' @param params A named numeric vector of parameter values and
