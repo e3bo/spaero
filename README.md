@@ -47,7 +47,7 @@ limited time to work on items not directly supporting the project's
 research.
 
 More details about contribution may be found in the
-[contributing guidelines](CONTRIBUTING.md).
+[contribution guidelines](CONTRIBUTING.md).
 
 ## License
 
