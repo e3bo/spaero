@@ -35,7 +35,6 @@
 #' components of the parameters.
 #'
 #' @seealso \code{\link[pomp]{pomp}} for documentation of pomp objects
-#' @useDynLib spaero
 #' @export
 #' @examples
 #'
@@ -68,13 +67,6 @@ create_simulator <- function(times = seq(0, 9), t0 = min(times),
          call. = FALSE)
   }
   data <- data.frame(time = times, reports = NA)
-  d <- cbind(birth = c(1, 1, 1, 1, 0),
-             sdeath = c(1, 1, 1, 1, 0),
-             infection = c(1, 1, 1, 1, 0),
-             ideath = c(1, 1, 1, 1, 0),
-             recovery = c(1, 1, 1, 1, 0),
-             rdeath = c(1, 1, 1, 1, 0),
-             vaccination = c(1, 1, 1, 1, 0))
   if (process_model == "SIR") {
     v <- cbind(birth = c(1, 0, 0, 1, 0),
                sdeath = c(-1, 0, 0, -1, 0),
@@ -92,27 +84,10 @@ create_simulator <- function(times = seq(0, 9), t0 = min(times),
                rdeath = c(0, 0, -1, -1, 0),
                vaccination = c(0, 0, 1, 1, 0))
   }
-  is_newer_pomp <- utils::packageVersion("pomp") >= package_version("1.15.2")
   if (transmission == "density-dependent") {
-      if (!is_newer_pomp) {
-          rprocess <- pomp::gillespie.sim(rate.fun =
-                                     "_transition_rates_density_dependent",
-                                          PACKAGE = "spaero", v = v, d = d)
-      } else {
-          rprocess <- pomp::gillespie.sim(rate.fun =
-                                     "_transition_rates_density_dependent",
-                                     PACKAGE = "spaero", v = v)
-      }
+    rprocess <- do.call(pomp::gillespie.hl.sim, dendep_template)
   } else if (transmission == "frequency-dependent") {
-      if (!is_newer_pomp) {
-          rprocess <- pomp::gillespie.sim(rate.fun =
-                            "_transition_rates_frequency_dependent",
-                            PACKAGE = "spaero", v = v, d = d)
-      } else {
-          rprocess <- pomp::gillespie.sim(rate.fun =
-                            "_transition_rates_frequency_dependent",
-                            PACKAGE = "spaero", v = v)
-      }
+    rprocess <- do.call(pomp::gillespie.hl.sim, freqdep_template)
   }
   initializer <- function(params, t0, ...) {
     comp.names <- c("S", "I", "R")
@@ -135,8 +110,20 @@ create_simulator <- function(times = seq(0, 9), t0 = min(times),
              rprocess = rprocess,
              measurement.model = reports~binom(size = cases, prob = rho),
              covar = covar, statenames = c("S", "I", "R", "N", "cases"),
-             paramnames = c("gamma", "mu", "d", "eta", "beta", "rho", "S_0",
+             paramnames = c("gamma", "mu", "d", "eta", "mybeta", "rho", "S_0",
                  "I_0", "R_0", "N_0", "p"),
              covarnames = c("gamma_t", "mu_t", "d_t", "eta_t", "beta_t", "p_t"),
              tcovar = "time", zeronames = "cases", initializer = initializer)
 }
+
+
+dendep_template <- list(birthS=list("rate = N_0 * (mu + mu_t) * (1 - (p + p_t));", c(S=1, I = 0, R = 0, N = 1)),
+                        infectS=list("rate = ((mybeta + beta_t) * I + (eta + eta_t)) * S;", c(S=-1, I=1, R = 0, N = 0)),
+                        recoverI=list("rate = (gamma + gamma_t) * I;", c(S = 0, I=-1, R=1, N = 0)),
+                        deathS=list("rate = (d + d_t) * S;", c(S=-1, N = -1, R = 0, I = 0)),
+                        deathI=list("rate = (d + d_t) * I;", c(I=-1, N = -1, S = 0, R = 0)),
+                        deathR=list("rate = (d + d_t) * R ;", c(R=-1, N = -1, S = 0, I = 0)),
+                        vaccinate=list("rate = N_0 * (mu + mu_t) * (p + p_t);", c(R=1, N = 1, S = 0, I = 0)))
+
+freqdep_template <- dendep_template
+freqdep_template$infectS[[1]] <- "rate = ((beta + beta_t) * I / N + (eta + eta_t)) * S;"
