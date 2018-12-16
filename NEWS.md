@@ -1,3 +1,10 @@
+# spaero 0.4.0
+
+- Change name of "beta" in the parameters of the simulators to
+  "beta_par". This change allows the simulation code to be simplified,
+  which both resolves an error caused by pomp version 1.19 and may
+  prevent future errors as pomp continues to develop.
+
 # spaero 0.3.0
 
 - Add vaccination reaction to simulator. A vaccination rate of zero
