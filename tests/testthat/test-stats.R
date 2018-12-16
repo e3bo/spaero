@@ -286,10 +286,10 @@ test_that(paste("Estimate of stats consistent with other methods",
   skip_if_not_installed("earlywarnings")
   skip_on_cran()
 
-  params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 1e-4, beta = 0,
+  params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 1e-4, beta_par = 0,
               rho = 0.9, S_0 = 1, I_0 = 0, R_0 = 0, N_0 = 1e5, p = 0)
   covar <- data.frame(gamma_t = c(0, 0), mu_t = c(0, 0), d_t = c(0, 0),
-                      eta_t = c(0, 0), beta_t = c(0, 24e-5), p_t = c(0, 0),
+                      eta_t = c(0, 0), beta_par_t = c(0, 24e-5), p_t = c(0, 0),
                       time = c(0, 300))
   times <- seq(0, 200, by = 1 / 12)
 

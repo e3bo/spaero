@@ -5,11 +5,13 @@
 \title{Create surveillance data simulator.}
 \usage{
 create_simulator(times = seq(0, 9), t0 = min(times),
-  process_model = c("SIR", "SIS"), transmission = c("density-dependent",
-  "frequency-dependent"), params = c(gamma = 24, mu = 1/70, d = 1/70, eta =
-  1e-05, beta = 1e-04, rho = 0.1, S_0 = 1, I_0 = 0, R_0 = 0, N_0 = 1e+05, p =
-  0), covar = data.frame(gamma_t = c(0, 0), mu_t = c(0, 0), d_t = c(0, 0),
-  eta_t = c(0, 0), beta_t = c(0, 0), p_t = c(0, 0), time = c(0, 1e+06)))
+  process_model = c("SIR", "SIS"),
+  transmission = c("density-dependent", "frequency-dependent"),
+  params = c(gamma = 24, mu = 1/70, d = 1/70, eta = 1e-05, beta_par =
+  1e-04, rho = 0.1, S_0 = 1, I_0 = 0, R_0 = 0, N_0 = 1e+05, p = 0),
+  covar = data.frame(gamma_t = c(0, 0), mu_t = c(0, 0), d_t = c(0, 0),
+  eta_t = c(0, 0), beta_par_t = c(0, 0), p_t = c(0, 0), time = c(0,
+  1e+06)))
 }
 \arguments{
 \item{times}{A numeric vector of increasing times at which the

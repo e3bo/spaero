@@ -48,7 +48,7 @@ the reaction rates.
 \begin{tabular}{lll} \hline{Event}&{($\Delta S,\Delta I, \Delta R$)}&{Rate}\\
 \hline birth of a susceptible & $(1,0,0)$ & $ N_0 (\mu + \mu_t) [1 - (p + pt_t)] $\\
 death of a susceptible & $(-1,0,0)$& $S (d + d_t)$\\
-infection & $(-1,1,0)$ & $(\beta + \beta_t) I S + (\eta + \eta_t) S$\\
+infection & $(-1,1,0)$ & $(\beta_par + \beta_par_t) I S + (\eta + \eta_t) S$\\
 death of an infective & $(0,-1,0)$ & $I (d + d_t)$\\
 recovery of an infective & $(0,-1,1)$ & $I (\gamma + \gamma_t)$\\
 death of a removed & $(0,0,-1)$ & $R (d + d_t)$\\
@@ -148,10 +148,10 @@ follows.
 
 ```{r}
 
-params <- c(gamma=24, mu=0.014, d=0.014, eta=1e-4, beta=0,
+params <- c(gamma=24, mu=0.014, d=0.014, eta=1e-4, beta_par=0,
             rho=0.9, S_0=1, I_0=0, R_0=0, N_0=1e5, p=0)
 covar <- data.frame(gamma_t=c(0, 0), mu_t=c(0, 0), d_t=c(0, 0), eta_t=c(0, 0),
-                    beta_t=c(0, 24e-5), p_t = c(0, 0), time=c(0, 300))
+                    beta_par_t=c(0, 24e-5), p_t = c(0, 0), time=c(0, 300))
 times <- seq(0, 200, by=1/12)
 
 sim <- create_simulator(params=params, times=times, covar=covar)

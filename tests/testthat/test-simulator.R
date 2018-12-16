@@ -7,10 +7,10 @@ test_that("Argument checking works", {
             expect_error(create_simulator(),
                          regexp = "The pomp package is needed"))
   foo <- create_simulator()
-  params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 1e-4, beta = 24e-2,
+  params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 1e-4, beta_par = 24e-2,
               rho = 0.9, S_0 = -1, I_0 = 0, R_0 = 0, N_0 = 1e2, p = 0)
   expect_error(pomp::simulate(foo, params = params))
-  params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 1e-4, beta = 24e-2,
+  params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 1e-4, beta_par = 24e-2,
               rho = -9, S_0 = 1, I_0 = 0, R_0 = 0, N_0 = 1e2, p = 0)
   expect_error(pomp::simulate(foo, params = params))
 })
@@ -20,10 +20,10 @@ context("Gillespie direct method simulator")
 test_that("Calculation of cases consistent with number of recovered", {
   skip_if_not_installed("pomp")
 
-  params <- c(gamma = 24, mu = 0.014, d = 0.0, eta = 1e-4, beta = 24,
+  params <- c(gamma = 24, mu = 0.014, d = 0.0, eta = 1e-4, beta_par = 24,
               rho = 0.9, S_0 = 1, I_0 = 0, R_0 = 0, N_0 = 1e2, p = 0)
   covar <- data.frame(gamma_t = c(0, 0), mu_t = c(0, 0), d_t = c(0, 0),
-                      eta_t = c(0, 0), beta_t = c(0, 0), p_t = c(0, 0),
+                      eta_t = c(0, 0), beta_par_t = c(0, 0), p_t = c(0, 0),
                       time = c(0, 1e6))
   times <- seq(0, 1000, by = 1)
 
@@ -40,10 +40,10 @@ test_that(paste("Mean and stddev of stationary model over time",
   skip_if_not_installed("pomp")
   skip_on_cran()
 
-  params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 1e-4, beta = 24e-2,
+  params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 1e-4, beta_par = 24e-2,
               rho = 0.9, S_0 = 1, I_0 = 0, R_0 = 0, N_0 = 1e2, p = 0)
   covar <- data.frame(gamma_t = c(0, 0), mu_t = c(0, 0), d_t = c(0, 0),
-                      eta_t = c(0, 0), beta_t = c(0, 0), p_t = c(0, 0),
+                      eta_t = c(0, 0), beta_par_t = c(0, 0), p_t = c(0, 0),
                       time = c(0, 1e6))
   times <- seq(0, 1e6, by = 1)
 
@@ -62,11 +62,11 @@ test_that(paste("Means and final stddev of time-dependent model",
   skip_if_not_installed("pomp")
   skip_on_cran()
 
-  params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 1e-4, beta = 0e-2,
+  params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 1e-4, beta_par = 0e-2,
               rho = 0.9, S_0 = 1, I_0 = 0, R_0 = 0, N_0 = 1e2, p = 0)
   covar <- data.frame(gamma_t = c(0, 0), mu_t = c(0, 0), d_t = c(0, 0),
-                      eta_t = c(0, 0), beta_t = c(0, 3 * 24e-2), p_t = c(0, 0),
-                      time = c(0, 60))
+                      eta_t = c(0, 0), beta_par_t = c(0, 3 * 24e-2),
+                      p_t = c(0, 0), time = c(0, 60))
   times <- seq(0, 50, len = 100)
 
   sim <- create_simulator(params = params, times = times, covar = covar,
@@ -86,14 +86,14 @@ test_that(paste("Means and final stddev of time-dependent model",
   expect_equal(sd(ens_susceptible[100, ]), tfsds["S"],
                check.attributes = FALSE, tol = 0.1)
 
-  params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 0.1, beta = 0e-2,
+  params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 0.1, beta_par = 0e-2,
               rho = 0.9, S_0 = 1, I_0 = 0, R_0 = 0, N_0 = 1e2, p = 0)
   times <- seq(0, 20, len = 100)
   tf <- seq(0, 20, len = 1e3)
 
   covar <- list()
   covar$eta_t <- params["eta"] * (1 + sin(tf / 10))
-  covar$beta_t <- 12 * tf / 100
+  covar$beta_par_t <- 12 * tf / 100
   covar$gamma_t <- params["gamma"] * sin(tf / 2)
   covar$mu_t <- tf / 100
   covar$d_t <- params["d"] * exp(-tf)
@@ -125,9 +125,9 @@ test_that(paste("Fluctuations for large system sizes approximate AR process",
   skip_if_not_installed("pomp")
   skip_on_cran()
 
-  params <- c(gamma = 16.59091, mu = 0.02, d = 0.02, eta = 2e-4, beta = 100e-6,
-              rho = 0.9, S_0 = 0.165779, I_0 = 0.001004, R_0 = 0.833216,
-              N_0 = 1e6, p = 0)
+  params <- c(gamma = 16.59091, mu = 0.02, d = 0.02, eta = 2e-4,
+              beta_par = 100e-6, rho = 0.9, S_0 = 0.165779, I_0 = 0.001004,
+              R_0 = 0.833216, N_0 = 1e6, p = 0)
   times <- seq(0, 1000, len = 1000)
   sim <- create_simulator(params = params, times = times, process_model = "SIR")
   so <- pomp::simulate(sim, as.data.frame = TRUE, seed = 202)
@@ -162,9 +162,9 @@ test_that(paste("Susceptible population dynamics match deterministic",
   params <- structure(c(16.59, 0.02, 0.02, 0, 332.21,
                         0, 1e+06, 0.99, 0.00987691726812067,
                         0, 0.990122934536821
-                        ), .Names = c("gamma", "mu", "d", "eta", "beta",
+                        ), .Names = c("gamma", "mu", "d", "eta", "beta_par",
                                "rho", "N_0", "p", "S_0", "I_0", "R_0"))
-  R0 <- params["beta"] / (params["gamma"] + params["d"])
+  R0 <- params["beta_par"] / (params["gamma"] + params["d"])
   k1 <- params["d"] * (1 - params["p"])
   k3 <- -params["d"]
   S0 <- params["S_0"] / sum(params["S_0"], params["I_0"], params["R_0"])
@@ -182,7 +182,7 @@ test_that(paste("Susceptible population dynamics match deterministic",
   p_t <- c(0, -params["p"] + eps, -params["p"] + eps)
 
   covar <- data.frame(gamma_t = 0, mu_t = 0, d_t = 0, eta_t = 0,
-                      beta_t = 0, p_t = p_t,
+                      beta_par_t = 0, p_t = p_t,
                       time = c(0, tzero, max(c(tzero, times))))
   create_simulator(times = times, t0 = 0, transmission = "frequency-dependent",
                    params = params, covar = covar) -> sim
