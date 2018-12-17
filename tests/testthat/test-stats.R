@@ -28,6 +28,14 @@ test_that("Skipping detrending works", {
   expect_equal(detrend(1:10, trend = "assume_zero")$x, matrix(1:10))
 })
 
+test_that("non-numeric vector input leads to errors", {
+  expect_error(detrend(c(0, "0")),
+               regexp = "\'x\' must be numeric")
+  expect_error(get_noncentral_moments(c(10, 10), est = "local_consant",
+                                      bandwidth = 1, moment_number = 0.9),
+               regexp = "\'moment_number\' must be >= 1")
+})
+
 context("smoothing")
 
 test_that("Smoothing function works as expected", {
@@ -72,6 +80,15 @@ test_that("Smoothing function works as expected", {
                          kernel = "uniform")$smooth,
                check.names = FALSE)
 })
+
+context("moment function")
+
+test_that("argument checking works", {
+            expect_error(get_noncentral_moments(c(0, "0")),
+                         regexp = "\'x\' must be numeric")
+
+          })
+
 
 context("smoothing arguments")
 
