@@ -17,6 +17,23 @@ test_that("Argument checking works", {
 
 context("Gillespie direct method simulator")
 
+test_that("SIS simulation equilibrium approximates mathematical equilibrium", {
+
+  params <- c(gamma = 24, mu = 0.0, d = 0.0, eta = 0, beta_par = 48,
+              rho = 0.9, S_0 = 1, I_0 = .1, R_0 = 0, N_0 = 1e4, p = 0)
+  covar <- data.frame(gamma_t = c(0, 0), mu_t = c(0, 0), d_t = c(0, 0),
+                      eta_t = c(0, 0), beta_par_t = c(0, 0), p_t = c(0, 0),
+                      time = c(0, 1e6))
+  times <- c(0, 5:10)
+  sim <- create_simulator(params = params, times = times, covar = covar,
+                          process_model = "SIS",
+                          transmission = "frequency-dependent")
+  so <- as(pomp::simulate(sim, seed = 200), "data.frame")
+  expect_equal(mean(so$I[-1] / so$N[-1]),
+               with(as.list(params), gamma / beta_par), tol = 0.1)
+          })
+
+
 test_that("Calculation of cases consistent with number of recovered", {
   skip_if_not_installed("pomp")
 
