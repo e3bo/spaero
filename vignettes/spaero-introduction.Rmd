@@ -48,7 +48,7 @@ the reaction rates.
 \begin{tabular}{lll} \hline{Event}&{($\Delta S,\Delta I, \Delta R$)}&{Rate}\\
 \hline birth of a susceptible & $(1,0,0)$ & $ N_0 (\mu + \mu_t) [1 - (p + pt_t)] $\\
 death of a susceptible & $(-1,0,0)$& $S (d + d_t)$\\
-infection & $(-1,1,0)$ & $(\beta_par + \beta_par_t) I S + (\eta + \eta_t) S$\\
+infection & $(-1,1,0)$ & $(\beta + \beta_t) I S + (\eta + \eta_t) S$\\
 death of an infective & $(0,-1,0)$ & $I (d + d_t)$\\
 recovery of an infective & $(0,-1,1)$ & $I (\gamma + \gamma_t)$\\
 death of a removed & $(0,0,-1)$ & $R (d + d_t)$\\
@@ -94,6 +94,13 @@ like so:
 ```{r}
 as(simout, "data.frame")
 ```
+Note that the covariates (i.e., the time-dependent components of the
+parameters) are included in addition to the state variables and
+observables. Also, $\beta_t$ in Table~\ref{tsymb} is named with the
+string "beta_par_t" and not "beta_t". Similarly, the parameter $\beta$
+is named "beta_par". This name was chosen because "beta" cannot be
+used in the C code defining the simulator due to conflicts with the
+name of the beta function.
 
 Alternatively, one can run the simulator like this to output the
 results as a data frame.
