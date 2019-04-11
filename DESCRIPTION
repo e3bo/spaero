@@ -1,6 +1,6 @@
 Package: spaero
 Title: Software for Project AERO
-Version: 0.2.0.9000
+Version: 0.4.0.9000
 Authors@R: person("Eamon", "O'Dea", email = "odea35@gmail.com",
     role = c("aut", "cre"))
 Description: Implements methods for anticipating the emergence and eradication
@@ -10,16 +10,17 @@ Depends:
     R (>= 3.2.1)
 Imports:
     stats
-License: GPL (>= 2)
+License: GPL (>= 2) | file LICENSE
 LazyData: true
 Suggests:
     covr (>= 3.0.0),
     earlywarnings (>= 1.0.59),
     knitr (>= 1.11),
     np (>= 0.60.2),
-    pomp (>= 1.2.2.1),
+    pomp (>= 1.19),
     rmarkdown (>= 0.9.2),
     testthat (>= 0.11.0)
 BugReports: https://github.com/e3bo/spaero/issues/
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
 VignetteBuilder: knitr
+Encoding: UTF-8

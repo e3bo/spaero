@@ -7,7 +7,7 @@
 #' See the vignette "Getting Started with spaero" for a description of
 #' the model. The "params" argument must include all model
 #' parameters. These will become the default parameters for the model
-#' object. They can be overriden when the simulation is run via the
+#' object. They can be overridden when the simulation is run via the
 #' "params" argument of \code{pomp::simulate}. The case is the same
 #' for the "times" argument. The "covar" argument should be a data
 #' frame with a column named for each of the time-dependent parameters
@@ -26,7 +26,7 @@
 #' variable set to the initial conditions specified via params.
 #' @param process_model Character string giving the process
 #' model. Allowed values are '"SIR"' and '"SIS"'.
-#' @param transmission Character string decribing the transmission
+#' @param transmission Character string describing the transmission
 #' model. Allowed values are '"density-dependent"' and
 #' '"frequency-dependent"'.
 #' @param params A named numeric vector of parameter values and
@@ -35,7 +35,6 @@
 #' components of the parameters.
 #'
 #' @seealso \code{\link[pomp]{pomp}} for documentation of pomp objects
-#' @useDynLib spaero
 #' @export
 #' @examples
 #'
@@ -54,11 +53,12 @@ create_simulator <- function(times = seq(0, 9), t0 = min(times),
                              transmission = c("density-dependent",
                                  "frequency-dependent"),
                              params = c(gamma = 24, mu = 1 / 70, d = 1 / 70,
-                                 eta = 1e-5, beta = 1e-4, rho = 0.1, S_0 = 1,
-                                 I_0 = 0, R_0 = 0, N_0 = 1e5),
+                                 eta = 1e-5, beta_par = 1e-4, rho = 0.1,
+                                 S_0 = 1, I_0 = 0, R_0 = 0, N_0 = 1e5, p = 0),
                              covar = data.frame(gamma_t = c(0, 0),
                                  mu_t = c(0, 0), d_t = c(0, 0), eta_t = c(0, 0),
-                                 beta_t = c(0, 0), time = c(0, 1e6))) {
+                                 beta_par_t = c(0, 0), p_t = c(0, 0),
+                                 time = c(0, 1e6))) {
   process_model <- match.arg(process_model)
   transmission <- match.arg(transmission)
   if (!requireNamespace("pomp", quietly = TRUE)) {
@@ -67,37 +67,21 @@ create_simulator <- function(times = seq(0, 9), t0 = min(times),
          call. = FALSE)
   }
   data <- data.frame(time = times, reports = NA)
-  d <- cbind(birth = c(1, 1, 1, 1, 0),
-             sdeath = c(1, 1, 1, 1, 0),
-             infection = c(1, 1, 1, 1, 0),
-             ideath = c(1, 1, 1, 1, 0),
-             recovery = c(1, 1, 1, 1, 0),
-             rdeath = c(1, 1, 1, 1, 0))
-  if (process_model == "SIR") {
-    v <- cbind(birth = c(1, 0, 0, 1, 0),
-               sdeath = c(-1, 0, 0, -1, 0),
-               infection = c(-1, 1, 0, 0, 0),
-               ideath = c(0, -1, 0, -1, 0),
-               recovery = c(0, -1, 1, 0, 1),
-               rdeath = c(0, 0, -1, -1, 0))
-  } else {
-    v <- cbind(birth = c(1, 0, 0, 1, 0),
-               sdeath = c(-1, 0, 0, -1, 0),
-               infection = c(-1, 1, 0, 0, 0),
-               ideath = c(0, -1, 0, -1, 0),
-               recovery = c(1, -1, 0, 0, 1),
-               rdeath = c(0, 0, -1, -1, 0))
-  }
-  if (transmission == "density-dependent") {
-    rprocess <- pomp::gillespie.sim(rate.fun =
-                                      "_transition_rates_density_dependent",
-                                    PACKAGE = "spaero", v = v, d = d)
-  } else if (transmission == "frequency-dependent") {
-    rprocess <- pomp::gillespie.sim(rate.fun =
-                                      "_transition_rates_frequency_dependent",
-                                    PACKAGE = "spaero", v = v, d = d)
 
+  if (transmission == "density-dependent") {
+    if (process_model == "SIR") {
+      template <- dendep_sir_template
+    } else {
+      template <- dendep_sis_template
+    }
+  } else if (transmission == "frequency-dependent") {
+    if (process_model == "SIR") {
+      template <- freqdep_sir_template
+    } else {
+      template <- freqdep_sis_template
+    }
   }
+  rprocess <- do.call(pomp::gillespie.hl.sim, template)
   initializer <- function(params, t0, ...) {
     comp.names <- c("S", "I", "R")
     ic.names <- c("S_0", "I_0", "R_0")
@@ -116,11 +100,35 @@ create_simulator <- function(times = seq(0, 9), t0 = min(times),
     x0
   }
   pomp::pomp(data = data, times = "time", t0 = t0, params = params,
-             rprocess = rprocess,
+             paramnames = names(params), rprocess = rprocess,
              measurement.model = reports~binom(size = cases, prob = rho),
              covar = covar, statenames = c("S", "I", "R", "N", "cases"),
-             paramnames = c("gamma", "mu", "d", "eta", "beta", "rho", "S_0",
-                 "I_0", "R_0", "N_0"),
-             covarnames = c("gamma_t", "mu_t", "d_t", "eta_t", "beta_t"),
+             covarnames =
+               c("gamma_t", "mu_t", "d_t", "eta_t", "beta_par_t", "p_t"),
              tcovar = "time", zeronames = "cases", initializer = initializer)
 }
+
+
+dendep_sir_template <- list(
+    birthS=list("rate = N_0 * (mu + mu_t) * (1 - (p + p_t));",
+        c(S=1, I = 0, R = 0, N = 1, cases = 0)),
+    infectS=list("rate = ((beta_par + beta_par_t) * I + (eta + eta_t)) * S;",
+        c(S=-1, I=1, R = 0, N = 0, cases = 0)),
+    recoverI=list("rate = (gamma + gamma_t) * I;",
+        c(S = 0, I=-1, R=1, N = 0, cases = 1)),
+    deathS=list("rate = (d + d_t) * S;",
+        c(S=-1, N = -1, R = 0, I = 0, cases = 0)),
+    deathI=list("rate = (d + d_t) * I;",
+        c(I=-1, N = -1, S = 0, R = 0, cases = 0)),
+    deathR=list("rate = (d + d_t) * R ;",
+        c(R=-1, N = -1, S = 0, I = 0, cases = 0)),
+    vaccinate=list("rate = N_0 * (mu + mu_t) * (p + p_t);",
+        c(R=1, N = 1, S = 0, I = 0, cases = 0)))
+
+dendep_sis_template <- dendep_sir_template
+dendep_sis_template$recoverI[[2]] <- c(S = 1, I=-1, R=0, N = 0, cases = 1)
+
+freqdep_sir_template <- dendep_sir_template
+freqdep_sis_template <- dendep_sis_template
+freqdep_sis_template$infectS[[1]] <- freqdep_sir_template$infectS[[1]] <-
+  "rate = ((beta_par + beta_par_t) * I / N + (eta + eta_t)) * S;"

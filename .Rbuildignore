@@ -1,5 +1,7 @@
+^CRAN-RELEASE$
 ^.*\.Rproj$
 ^\.Rproj\.user$
 cran-comments.md
 ^\.travis\.yml$
 ^codecov\.yml$
+^CONTRIBUTING\.md$

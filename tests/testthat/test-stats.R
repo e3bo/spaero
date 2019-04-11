@@ -28,6 +28,14 @@ test_that("Skipping detrending works", {
   expect_equal(detrend(1:10, trend = "assume_zero")$x, matrix(1:10))
 })
 
+test_that("non-numeric vector input leads to errors", {
+  expect_error(detrend(c(0, "0")),
+               regexp = "\'x\' must be numeric")
+  expect_error(get_noncentral_moments(c(10, 10), est = "local_consant",
+                                      bandwidth = 1, moment_number = 0.9),
+               regexp = "\'moment_number\' must be >= 1")
+})
+
 context("smoothing")
 
 test_that("Smoothing function works as expected", {
@@ -72,6 +80,15 @@ test_that("Smoothing function works as expected", {
                          kernel = "uniform")$smooth,
                check.names = FALSE)
 })
+
+context("moment function")
+
+test_that("argument checking works", {
+            expect_error(get_noncentral_moments(c(0, "0")),
+                         regexp = "\'x\' must be numeric")
+
+          })
+
 
 context("smoothing arguments")
 
@@ -286,10 +303,11 @@ test_that(paste("Estimate of stats consistent with other methods",
   skip_if_not_installed("earlywarnings")
   skip_on_cran()
 
-  params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 1e-4, beta = 0,
-              rho = 0.9, S_0 = 1, I_0 = 0, R_0 = 0, N_0 = 1e5)
+  params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 1e-4, beta_par = 0,
+              rho = 0.9, S_0 = 1, I_0 = 0, R_0 = 0, N_0 = 1e5, p = 0)
   covar <- data.frame(gamma_t = c(0, 0), mu_t = c(0, 0), d_t = c(0, 0),
-                      eta_t = c(0, 0), beta_t = c(0, 24e-5), time = c(0, 300))
+                      eta_t = c(0, 0), beta_par_t = c(0, 24e-5), p_t = c(0, 0),
+                      time = c(0, 300))
   times <- seq(0, 200, by = 1 / 12)
 
   sim <- create_simulator(params = params, times = times, covar = covar)
