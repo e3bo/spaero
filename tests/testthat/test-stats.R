@@ -1,5 +1,42 @@
 set.seed(123)
 
+context("TDAR")
+
+test_that("TDAR estimation works for fixed AR(1) model", {
+  # Creating large sigma matrix, suppose y is length 50
+  sigma <- 0.15
+  phi <- 0.5
+  y <- 5
+  for (i in 1:149) {
+    y <- c(y, phi*y[length(y)] + rnorm(1, mean = 0, sd = sigma))
+  }
+  x <- y[-1]
+  x_length <- length(x)
+  sigma_matrix <- matrix(0, ncol = x_length, nrow = x_length)
+  for (i in 1:x_length) {
+    for (j in 1:x_length) {
+      if (i == j) {
+        sigma_matrix[i, j] <- sigma^2 / (1 - phi^2)
+      } else {
+        d <- abs(i - j)
+        sigma_matrix[i, j] <- phi^d * (sigma^2 / (1 - phi^2))
+      }
+    }
+  }
+  
+  # Get M and theta
+  f1 <- function(n) return(rep(1, length.out = n))
+  f2 <- function(n) return(seq(from = 1, to = n) - n / 2)
+  M <- get_TDAR_M(y, f1, f2)
+  V <- (M %*% sigma_matrix) %*% t(M)
+  theta <- get_TDAR_theta(M = M, x = x)
+  h0 <- matrix(c(phi, 0), nrow = 2)
+  z <- as.numeric((t(theta - h0) %*% solve(V)) %*% (theta - h0))
+  
+  # Significance test
+  expect_equal((z < qchisq(p = 0.95, df = 2)), TRUE)
+})
+
 context("detrending")
 
 test_that("Mean-based detrending works", {
