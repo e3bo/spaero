@@ -26,7 +26,7 @@ test_that("TDAR estimation works for fixed AR(1) model", {
   
   # Get M and theta
   f1 <- function(n) return(rep(1, length.out = n))
-  f2 <- function(n) return(seq(from = 1, to = n) - n / 2)
+  f2 <- function(n) return(seq(from = -n / 2 + 0.5, to = n / 2 - 0.5))
   M <- get_TDAR_M(y, f1, f2)
   V <- (M %*% sigma_matrix) %*% t(M)
   theta <- get_TDAR_theta(M = M, x = x)

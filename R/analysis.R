@@ -120,7 +120,7 @@ get_stats <- function(x, center_trend = "grand_mean",
   stats <- list()
   
   f1 <- function(n) return(rep(1, length.out = n))
-  f2 <- function(n) return(seq(from = 1, to = n) - n / 2)
+  f2 <- function(n) return(seq(from = -n / 2 + 0.5, to = n / 2 - 0.5))
   stats$ar_values <- vector()
   for (i in 3:length(x)) {
     current_data <- x[1:i]
@@ -179,11 +179,36 @@ get_stats <- function(x, center_trend = "grand_mean",
   stats$kurtosis <- stats$kurtosis$smooth / stats$variance ^ 2
   stats$kurtosis[stats$kurtosis < 0] <- 0
   
-  taus <- lapply(stats, get_tau)
+  # taus <- lapply(stats, get_tau)
+  taus <- lapply(stats, ktseq)
   ret <- list(stats = stats, taus = taus, centered = centered,
               stat_trend = stat_trend, stat_kernel = stat_kernel,
               stat_bandwidth = stat_bandwidth, lag = lag)
   ret
+}
+
+ktseq <- function(ts) {
+  r <- rank(ts, ties.method = "min")
+  n <- length(ts)
+  ndisc <- numeric(n)
+  npairsi <- cumsum(c(0, seq_len(n - 1)))
+  isdup <- duplicated(r)
+  udup <- unique(r[isdup])
+  duptally <- integer(length(udup))
+  names(duptally) <- as.character(udup)
+  n1 <- numeric(n)
+  for(i in seq_len(n)){
+    ndisc[i] <- sum(r[seq_len(i - 1)] > r[i])
+    if (isdup[i]) {
+      cri <- as.character(r[i])
+      duptally[cri] <- duptally[cri] + 1
+      n1[i] <- n1[i-1] + duptally[cri]
+    } else if (i > 1) {
+      n1[i] <- n1[i - 1]
+    }
+  }
+  ndisci <- cumsum(ndisc)
+  (npairsi - 2 * ndisci - n1) / sqrt(npairsi * (npairsi - n1))
 }
 
 get_tau <- function(x){
