@@ -186,7 +186,19 @@ get_stats <- function(x, center_trend = "grand_mean",
   stats$kurtosis[stats$kurtosis < 0] <- 0
 
   # taus <- lapply(stats, get_tau)
-  taus <- lapply(stats, ktseq)
+                                        # taus <- lapply(stats, ktseq)
+  if (!backward_only &&  stat_kernel != "gaussian"){
+    stop("rolling window Kendall's tau is not implemented for these parameters")
+  } else {
+    window_tau <- function(ewsts) {
+      wfun <- function(x) {
+        tail(ktseq(x), n = 1)
+      }
+      zoo::rollapplyr(ewsts, width = stat_bandwidth, FUN = wfun, partial = TRUE)
+    }
+    taus <- lapply(stats, window_tau)
+  }
+
   ret <- list(stats = stats, taus = taus, centered = centered,
               stat_trend = stat_trend, stat_kernel = stat_kernel,
               stat_bandwidth = stat_bandwidth, lag = lag)
