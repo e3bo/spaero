@@ -9,7 +9,9 @@ Description: Implements methods for anticipating the emergence and eradication
 Depends:
     R (>= 3.2.1)
 Imports:
-    stats
+    stats,
+    SuppDists,
+    zoo
 License: GPL (>= 2) | file LICENSE
 LazyData: true
 Suggests:

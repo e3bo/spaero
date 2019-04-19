@@ -197,11 +197,21 @@ get_stats <- function(x, center_trend = "grand_mean",
       zoo::rollapplyr(ewsts, width = stat_bandwidth, FUN = wfun, partial = TRUE)
     }
     taus <- lapply(stats, window_tau)
+    inputN <- nrow (centered$x)
+    windowN <- rep(stat_bandwidth, length.out = inputN)
+    windowN[1:stat_bandwidth] <- 1:stat_bandwidth ## partial windows
+    pvals <- function(tauts) {
+      tryCatch(c(NA, SuppDists::pKendall(q = tauts[-1], N = windowN[-1],
+                                         lower.tail = FALSE)),
+               error = function(e) NA)
+    }
+    tau_pvalues <- lapply(taus, pvals)
   }
 
   ret <- list(stats = stats, taus = taus, centered = centered,
               stat_trend = stat_trend, stat_kernel = stat_kernel,
-              stat_bandwidth = stat_bandwidth, lag = lag)
+              stat_bandwidth = stat_bandwidth, lag = lag,
+              tau_pvalues = tau_pvalues)
   ret
 }
 
