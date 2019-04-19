@@ -55,6 +55,9 @@
 #' @param backward_only Logical value (defaulting to 'FALSE') that
 #'     determines whether any uniform smoothing kernels are restricted
 #'     to using data before the index of the smoothed estimate.
+#' @param calc_TDAR Logical value (defaulting to 'FALSE') that
+#'     determines whether the time-dependent autoregressive model is
+#'     fitted.
 #' @return A list with elements '"stats"', '"taus"', '"centered"',
 #'     '"stat_trend"', '"stat_kernel"', '"stat_bandwidth"', and
 #'     '"lag"'. "stats" is a list containing vectors of the

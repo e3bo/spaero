@@ -7,7 +7,8 @@
 get_stats(x, center_trend = "grand_mean", center_kernel = c("gaussian",
   "uniform"), center_bandwidth = NULL, stat_trend = c("local_constant",
   "local_linear"), stat_kernel = c("uniform", "gaussian"),
-  stat_bandwidth = NULL, lag = 1, backward_only = FALSE)
+  stat_bandwidth = NULL, lag = 1, backward_only = FALSE,
+  calc_TDAR = FALSE)
 }
 \arguments{
 \item{x}{A univariate or multivariate numeric time series object or
@@ -44,6 +45,10 @@ be non-negative.}
 \item{backward_only}{Logical value (defaulting to 'FALSE') that
 determines whether any uniform smoothing kernels are restricted
 to using data before the index of the smoothed estimate.}
+
+\item{calc_TDAR}{Logical value (defaulting to 'FALSE') that
+determines whether the time-dependent autoregressive model is
+fitted.}
 }
 \value{
 A list with elements '"stats"', '"taus"', '"centered"',
