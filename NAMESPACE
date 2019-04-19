@@ -2,4 +2,3 @@
 
 export(create_simulator)
 export(get_stats)
-useDynLib(spaero)

@@ -94,6 +94,13 @@ like so:
 ```{r}
 as(simout, "data.frame")
 ```
+Note that the covariates (i.e., the time-dependent components of the
+parameters) are included in addition to the state variables and
+observables. Also, $\beta_t$ in Table~\ref{tsymb} is named with the
+string "beta_par_t" and not "beta_t". Similarly, the parameter $\beta$
+is named "beta_par". This name was chosen because "beta" cannot be
+used in the C code defining the simulator due to conflicts with the
+name of the beta function.
 
 Alternatively, one can run the simulator like this to output the
 results as a data frame.
@@ -148,10 +155,10 @@ follows.
 
 ```{r}
 
-params <- c(gamma=24, mu=0.014, d=0.014, eta=1e-4, beta=0,
+params <- c(gamma=24, mu=0.014, d=0.014, eta=1e-4, beta_par=0,
             rho=0.9, S_0=1, I_0=0, R_0=0, N_0=1e5, p=0)
 covar <- data.frame(gamma_t=c(0, 0), mu_t=c(0, 0), d_t=c(0, 0), eta_t=c(0, 0),
-                    beta_t=c(0, 24e-5), p_t = c(0, 0), time=c(0, 300))
+                    beta_par_t=c(0, 24e-5), p_t = c(0, 0), time=c(0, 300))
 times <- seq(0, 200, by=1/12)
 
 sim <- create_simulator(params=params, times=times, covar=covar)
@@ -287,5 +294,17 @@ plot_st(st3)
 That concludes our initial overview of the package. The current
 version of spaero is just a starting point and the package will
 continue to be actively developed for the foreseeable future.
+
+## Funding
+
+The development of this package was supported by the National
+Institute of General Medical Sciences of the National Institutes of
+Health under Award Number U01GM110744.
+
+## Disclaimer
+
+The content is solely the responsibility of the authors and does not
+necessarily reflect the official views of the National Institutes of
+Health.
 
 ## References

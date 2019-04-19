@@ -5,11 +5,13 @@
 \title{Create surveillance data simulator.}
 \usage{
 create_simulator(times = seq(0, 9), t0 = min(times),
-  process_model = c("SIR", "SIS"), transmission = c("density-dependent",
-  "frequency-dependent"), params = c(gamma = 24, mu = 1/70, d = 1/70, eta =
-  1e-05, beta = 1e-04, rho = 0.1, S_0 = 1, I_0 = 0, R_0 = 0, N_0 = 1e+05, p =
-  0), covar = data.frame(gamma_t = c(0, 0), mu_t = c(0, 0), d_t = c(0, 0),
-  eta_t = c(0, 0), beta_t = c(0, 0), p_t = c(0, 0), time = c(0, 1e+06)))
+  process_model = c("SIR", "SIS"),
+  transmission = c("density-dependent", "frequency-dependent"),
+  params = c(gamma = 24, mu = 1/70, d = 1/70, eta = 1e-05, beta_par =
+  1e-04, rho = 0.1, S_0 = 1, I_0 = 0, R_0 = 0, N_0 = 1e+05, p = 0),
+  covar = data.frame(gamma_t = c(0, 0), mu_t = c(0, 0), d_t = c(0, 0),
+  eta_t = c(0, 0), beta_par_t = c(0, 0), p_t = c(0, 0), time = c(0,
+  1e+06)))
 }
 \arguments{
 \item{times}{A numeric vector of increasing times at which the
@@ -21,7 +23,7 @@ variable set to the initial conditions specified via params.}
 \item{process_model}{Character string giving the process
 model. Allowed values are '"SIR"' and '"SIS"'.}
 
-\item{transmission}{Character string decribing the transmission
+\item{transmission}{Character string describing the transmission
 model. Allowed values are '"density-dependent"' and
 '"frequency-dependent"'.}
 
@@ -44,7 +46,7 @@ method and generate simulated observations of the process.
 See the vignette "Getting Started with spaero" for a description of
 the model. The "params" argument must include all model
 parameters. These will become the default parameters for the model
-object. They can be overriden when the simulation is run via the
+object. They can be overridden when the simulation is run via the
 "params" argument of \code{pomp::simulate}. The case is the same
 for the "times" argument. The "covar" argument should be a data
 frame with a column named for each of the time-dependent parameters
