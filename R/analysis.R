@@ -187,7 +187,7 @@ get_stats <- function(x, center_trend = "grand_mean",
 
   # taus <- lapply(stats, get_tau)
                                         # taus <- lapply(stats, ktseq)
-  if (!backward_only &&  stat_kernel != "gaussian"){
+  if (!(backward_only &&  stat_kernel == "uniform")){
     stop("rolling window Kendall's tau is not implemented for these parameters")
   } else {
     window_tau <- function(ewsts) {
