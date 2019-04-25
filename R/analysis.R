@@ -125,9 +125,9 @@ get_stats <- function(x, center_trend = "grand_mean",
   for (i in 3:length(x)) {
     current_data <- x[1:i]
     new_calculation <- tryCatch({
-      M <- get_TDAR_M(y = x, f1, f2)
-      theta <- get_TDAR_theta(M = M, x = x[-1])
-      get_TDAR_values(y = x, theta = theta, f1, f2)
+      M <- get_TDAR_M(y = current_data, f1, f2)
+      theta <- get_TDAR_theta(M = M, x = current_data[-1])
+      get_TDAR_values(y = current_data, theta = theta, f1, f2)
     }, error = function(e) {
       replace <- 5
     }
