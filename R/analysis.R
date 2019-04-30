@@ -123,6 +123,7 @@ get_stats <- function(x, center_trend = "grand_mean",
                       backward_only = backward_only)
   stats <- list()
 
+
   if (calc_TDAR) {
     f1 <- function(n) return(rep(1, length.out = n))
     f2 <- function(n) return(seq(from = -n / 2 + 0.5, to = n / 2 - 0.5))
@@ -130,14 +131,11 @@ get_stats <- function(x, center_trend = "grand_mean",
     for (i in 3:length(x)) {
       current_data <- x[1:i]
       new_calculation <- tryCatch({
-        M <- get_TDAR_M(y = x, f1, f2)
-        theta <- get_TDAR_theta(M = M, x = x[-1])
-        get_TDAR_values(y = x, theta = theta, f1, f2)
-      }, error = function(e) {
-        replace <- 5
-      }
-      )
-      # new_calculation <- custom_fitTDAR(y = current_data, f1, f2)
+          M <- get_TDAR_M(y = current_data, f1, f2)
+          theta <- get_TDAR_theta(M = M, x = current_data[-1])
+          get_TDAR_values(y = current_data, theta = theta, f1, f2)
+        }, error = function(e) {
+          replace <- 5})
       stats$ar_values[i] <- new_calculation[i]
     }
   }

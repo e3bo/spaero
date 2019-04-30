@@ -4,33 +4,120 @@ context("TDAR")
 
 test_that("TDAR estimation works for fixed AR(1) model", {
   # Creating large sigma matrix, suppose y is length 50
-  sigma <- 0.15
-  phi <- 0.5
-  y <- 5
-  for (i in 1:149) {
-    y <- c(y, phi*y[length(y)] + rnorm(1, mean = 0, sd = sigma))
+  # Basis functions
+  f1 <- function(n) return(rep(1, length.out = n))
+  f2 <- function(n) return(seq(from = -n / 2 + 0.5, to = n / 2 - 0.5))
+  
+  # a values
+  sigma <- 0.01
+  h0 <- matrix(c(0.2, 0.02), nrow = 2)
+  a <- h0[1]*f1(29) + h0[2]*f2(29)
+  y <- 0
+  for (i in 1:29) {
+    y <- c(y[length(y)]*a[i] + rnorm(1, mean = 0, sd = sigma), y)
   }
   x <- y[-1]
-  x_length <- length(x)
-  sigma_matrix <- matrix(0, ncol = x_length, nrow = x_length)
-  for (i in 1:x_length) {
-    for (j in 1:x_length) {
-      if (i == j) {
-        sigma_matrix[i, j] <- sigma^2 / (1 - phi^2)
+  sigma_mat <- matrix(0, nrow = length(a), ncol = length(a))
+  
+  # Function to fill sigma_mat
+  fill_matrix <- function(sigma_mat, a, sigma, t1, t2) {
+    # If t1 == t2 and t1 > 0
+    if (t1 == t2) {
+      # Get sum_term
+      i_values <- 0:(t1 - 2)
+      
+      # Make sure no negative values in i_values
+      if (!(FALSE %in% (i_values >= 0))) {
+        get_j_indices <- function(i) return(seq(from = i + 1, to = t1 - 1))
+        get_aj_values <- function(j_values) sapply(j_values, function(j) a[j]^2)
+        sum_term <- unlist(
+          sum(
+            unlist(
+              lapply(lapply(lapply(i_values, get_j_indices), get_aj_values), prod)
+            )
+          )
+        )
+        
+        # Get index_term
+        index_term <- sigma^2 * (1 + sum_term)
       } else {
-        d <- abs(i - j)
-        sigma_matrix[i, j] <- phi^d * (sigma^2 / (1 - phi^2))
+        index_term <- sigma^2
       }
+      
+    }
+    
+    # If t2 > t1 > 0
+    if (t2 > t1) {
+      # Get sum_term
+      i_values <- 0:(t1 - 2)
+      
+      # Make sure there are no negatives in i_values
+      if (!(FALSE %in% (i_values >= 0))) {
+        get_j_indices <- function(i) return(seq(from = i + 1, to = t1 - 1))
+        get_aj_values <- function(j_values) sapply(j_values, function(j) a[j]^2)
+        sum_term <- unlist(
+          sum(
+            unlist(
+              lapply(lapply(lapply(i_values, get_j_indices), get_aj_values), prod)
+            )
+          )
+        )
+        
+        # Get prod_term
+        prod_idx_values <- seq(from = t1, to = (t2 - 1))
+        prod_term <- prod(a[prod_idx_values])
+        
+        # Get index_term
+        index_term <- sigma^2 * (1 + sum_term) * prod_term
+      } else {
+        index_term <- sigma^2
+      }
+    }
+    
+    # If t1 > t2 > 0
+    if (t1 > t2) {
+      # Get sum_term
+      i_values <- 0:(t2 - 2)
+      
+      # Make sure no negative values in i_values
+      if (!(FALSE %in% (i_values >= 0))) {
+        get_j_indices <- function(i) return(seq(from = i + 1, to = t2 - 1))
+        get_aj_values <- function(j_values) sapply(j_values, function(j) a[j]^2)
+        sum_term <- unlist(
+          sum(
+            unlist(
+              lapply(lapply(lapply(i_values, get_j_indices), get_aj_values), prod)
+            )
+          )
+        )
+        
+        # Get prod_term
+        prod_idx_values <- seq(from = t2, to = (t1 - 1))
+        prod_term <- prod(a[prod_idx_values])
+        
+        # Get index_term
+        index_term <- sigma^2 * (1 + sum_term) * prod_term
+      } else {
+        index_term <- sigma^2
+      }
+      
+    }
+    
+    # Return index_term
+    return(index_term)
+  }
+  
+  # Fill sigma_mat
+  for (t1 in 1:length(x)) {
+    for (t2 in 1:length(x)) {
+      sigma_mat[t1, t2] <- fill_matrix(sigma_mat = sigma_mat, a = a, sigma = sigma, t1 = t1, t2 = t2)
     }
   }
   
   # Get M and theta
-  f1 <- function(n) return(rep(1, length.out = n))
-  f2 <- function(n) return(seq(from = -n / 2 + 0.5, to = n / 2 - 0.5))
   M <- get_TDAR_M(y, f1, f2)
-  V <- (M %*% sigma_matrix) %*% t(M)
+  V <- (M %*% sigma_mat) %*% t(M)
   theta <- get_TDAR_theta(M = M, x = x)
-  h0 <- matrix(c(phi, 0), nrow = 2)
   z <- as.numeric((t(theta - h0) %*% solve(V)) %*% (theta - h0))
   
   # Significance test
