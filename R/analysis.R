@@ -128,7 +128,7 @@ get_stats <- function(x, center_trend = "grand_mean",
     f1 <- function(n) return(rep(1, length.out = n))
     f2 <- function(n) return(seq(from = -n / 2 + 0.5, to = n / 2 - 0.5))
     stats$ar_values <- vector()
-    for (i in 3:length(x)) {
+    for (i in 3:length(x)) { ## TODO What if x is of length 2 or less, or a matrix? Why is lowest i 3 and not 2?
       current_data <- x[1:i]
       new_calculation <- tryCatch({
           M <- get_TDAR_M(y = current_data, f1, f2)
@@ -189,10 +189,7 @@ get_stats <- function(x, center_trend = "grand_mean",
     stop("rolling window Kendall's tau is not implemented for these parameters")
   } else {
     window_tau <- function(ewsts) {
-      wfun <- function(x) {
-        tail(ktseq(x), n = 1)
-      }
-      zoo::rollapplyr(ewsts, width = stat_bandwidth, FUN = wfun, partial = TRUE)
+      zoo::rollapplyr(ewsts, width = stat_bandwidth, FUN = get_tau, partial = TRUE)
     }
     taus <- lapply(stats, window_tau)
     inputN <- nrow (centered$x)
@@ -211,30 +208,6 @@ get_stats <- function(x, center_trend = "grand_mean",
               stat_bandwidth = stat_bandwidth, lag = lag,
               tau_pvalues = tau_pvalues)
   ret
-}
-
-ktseq <- function(ts) {
-  r <- rank(ts, ties.method = "min")
-  n <- length(ts)
-  ndisc <- numeric(n)
-  npairsi <- cumsum(c(0, seq_len(n - 1)))
-  isdup <- duplicated(r)
-  udup <- unique(r[isdup])
-  duptally <- integer(length(udup))
-  names(duptally) <- as.character(udup)
-  n1 <- numeric(n)
-  for(i in seq_len(n)){
-    ndisc[i] <- sum(r[seq_len(i - 1)] > r[i])
-    if (isdup[i]) {
-      cri <- as.character(r[i])
-      duptally[cri] <- duptally[cri] + 1
-      n1[i] <- n1[i-1] + duptally[cri]
-    } else if (i > 1) {
-      n1[i] <- n1[i - 1]
-    }
-  }
-  ndisci <- cumsum(ndisc)
-  (npairsi - 2 * ndisci - n1) / sqrt(npairsi * (npairsi - n1))
 }
 
 get_tau <- function(x){
