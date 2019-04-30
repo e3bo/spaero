@@ -9,6 +9,7 @@ Description: Implements methods for anticipating the emergence and eradication
 Depends:
     R (>= 3.2.1)
 Imports:
+    boot,
     stats,
     SuppDists,
     zoo

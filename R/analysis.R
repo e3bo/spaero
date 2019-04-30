@@ -210,6 +210,24 @@ get_stats <- function(x, center_trend = "grand_mean",
   ret
 }
 
+get_boot_pvals <- function(tseries, block_size = 52, nresamplings = 300,
+                           parallel = "no", ...){
+  wrap <- function(...){
+    unlist(get_stats(...)$taus)
+  }
+  nms <- names(do.call(get_stats, c(list(x = tseries), list(...)))$taus)
+  N <- length(tseries)
+  bootout <- boot::tsboot(tseries, wrap, R = nresamplings, l = block_size,
+                          sim = "fixed", parallel = parallel, ...)
+  pvec <- 1 - rowMeans(t(bootout$t) < bootout$t0)
+  news <- 11
+  stopifnot(length(pvec) == N * news)
+  ## assuming there should be a time series of length N for each EWS
+  ret <- as.list(as.data.frame(matrix(pvec, nrow = N, ncol = news)))
+  names(ret) <- nms
+  ret
+}
+
 get_tau <- function(x){
   if (any(is.finite(x))){
     stats::cor(x = seq_along(x), y = x, method = "kendall",
