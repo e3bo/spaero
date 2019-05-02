@@ -210,15 +210,68 @@ get_stats <- function(x, center_trend = "grand_mean",
   ret
 }
 
-get_boot_pvals <- function(tseries, block_size = 52, nresamplings = 300,
+wrap <- function(...){
+  unlist(get_stats(...)$taus)
+}
+
+#' Get p-values for rolling window correlations of early warning signals
+#'
+#' \code{get_boot_pvals} estimates the proportion of Kendal's taus
+#' that are larger than the estimated values of Kendal's tau for a
+#' time series of statistics calculated by \code{get_stats}.
+#'
+#' Kendal's tau for the null model are simulated by calculating the
+#' rolling windows Kendal's tau of rolling window statistics in
+#' resamplings of the input time series. A fixed length
+#' block-bootstrap method of resamplings are performed using
+#' \code{boot::tsboot}.
+#'
+#' Rolling window Kendal's tau are only implemented for some choices
+#' of parameters for \code{get_stats}, and it is necessary to specify
+#' those choices in the \code{...} arguments of this function to avoid
+#' a "Not implemented" error. Specifically, one must use
+#' '"backward_only" = TRUE'. Also, the flexiblity of
+#' \code{get_boot_pvals} is limited and requires that \code{get_stats}
+#' calculate a moving window mean as an output statistics as well as
+#' the time-dependent autocorrelation. Therefore, the \code{...}
+#' arguments should also contain '"calc_TDAR" = TRUE, center_trend =
+#' "local_constant"' and provide a value for
+#' "center_bandwidth". Examples of suitable calls to
+#' \code{get_boot_pvals} are provided below.
+#'
+#' @param x A univariate or multivariate numeric time series object or
+#'     a numeric vector or matrix.
+#' @param block_size The block length used in generating replicate
+#' time series. 'block_size' should be a postiive integer less tha the
+#' number of observations.
+#' @param nresamplings The number of bootstrap replicates to use to
+#' approximate the p-values.
+#' @param parallel Argument for \code{tsboot} to determine type of
+#' parallelization used. By default, parallelization is not done.
+#'
+#' @param ... Named arguments to \code{get_stats} may be supplied here.
+#'
+#' @return A list with elements names that match the names of '"taus"'
+#' in the output of \code{get_stats}. Each element is a vector that
+#' gives the p-values of the Kendal's tau correlation coefficients
+#' provided by the vectors in the '"taus"' output of \code{get_stats}.
+#'
+#' @seealso \code{\link{get_stats}} and \code{\link[boot]{tsboot}}
+#' @export
+#' @examples
+#'
+#' sdat <- stats::arima.sim(model = list(order = c(2, 0, 0),
+#'                          ar = c(0.89, -0.3)), n = 100)
+#' bo <- get_boot_pvals(sdat, nresamplings = 100, stat_bandwidth = 10,
+#'                      backward_only = TRUE, center_trend = "local_constant",
+#'                      center_bandwidth= 10, calc_TDAR = TRUE)
+get_boot_pvals <- function(x, block_size = 52, nresamplings = 300,
                            parallel = "no", ...){
-  wrap <- function(...){
-    unlist(get_stats(...)$taus)
-  }
-  nms <- names(do.call(get_stats, c(list(x = tseries), list(...)))$taus)
-  N <- length(tseries)
-  bootout <- boot::tsboot(tseries, wrap, R = nresamplings, l = block_size,
-                          sim = "fixed", parallel = parallel, ...)
+  nms <- names(do.call(get_stats, c(list(x = x), list(...)))$taus)
+  N <- length(x)
+  bootout <- boot::tsboot(tseries = x, statistic = wrap, R = nresamplings,
+                          l = block_size, sim = "fixed", parallel = parallel,
+                          ...)
   pvec <- 1 - rowMeans(t(bootout$t) < bootout$t0)
   news <- 11
   stopifnot(length(pvec) == N * news)
