@@ -222,8 +222,8 @@ wrap <- function(...){
 #'
 #' Kendal's tau for the null model are simulated by calculating the
 #' rolling windows Kendal's tau of rolling window statistics in
-#' resamplings of the input time series. A fixed length
-#' block-bootstrap method of resamplings are performed using
+#' resamplings of the input time series. A fixed-length--block
+#' bootstrap method of resamplings are performed using
 #' \code{boot::tsboot}.
 #'
 #' Rolling window Kendal's tau are only implemented for some choices
@@ -239,8 +239,8 @@ wrap <- function(...){
 #' "center_bandwidth". Examples of suitable calls to
 #' \code{get_boot_pvals} are provided below.
 #'
-#' @param x A univariate or multivariate numeric time series object or
-#'     a numeric vector or matrix.
+#' @param x A univariate numeric time series object or
+#'     a numeric vector.
 #' @param block_size The block length used in generating replicate
 #' time series. 'block_size' should be a postiive integer less tha the
 #' number of observations.
@@ -265,6 +265,17 @@ wrap <- function(...){
 #' bo <- get_boot_pvals(sdat, nresamplings = 100, stat_bandwidth = 10,
 #'                      backward_only = TRUE, center_trend = "local_constant",
 #'                      center_bandwidth= 10, calc_TDAR = TRUE)
+#'
+#' foo <- create_simulator(
+#'         covar = data.frame(gamma_t = c(0, 0), mu_t = c(0, 0), d_t = c(0, 0),
+#'         eta_t = c(0, 0), beta_par_t = c(0, 0.00014), p_t = c(0, 0), time = c(0,
+#'           40)))
+#' out <- pomp::simulate(foo, times = seq(0, 40, by = 1/26), eta = 1e-3)
+#' out <- as(out, "data.frame")
+#'
+#'
+#'
+#' head(out)
 get_boot_pvals <- function(x, block_size = 52, nresamplings = 300,
                            parallel = "no", ...){
   nms <- names(do.call(get_stats, c(list(x = x), list(...)))$taus)
