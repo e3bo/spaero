@@ -8,7 +8,7 @@ get_stats(x, center_trend = "grand_mean", center_kernel = c("gaussian",
   "uniform"), center_bandwidth = NULL, stat_trend = c("local_constant",
   "local_linear"), stat_kernel = c("uniform", "gaussian"),
   stat_bandwidth = NULL, lag = 1, backward_only = FALSE,
-  calc_TDAR = FALSE)
+  calc_TDAR = FALSE, tau_bandwidth = stat_bandwidth * 5)
 }
 \arguments{
 \item{x}{A univariate or multivariate numeric time series object or
@@ -49,6 +49,9 @@ to using data before the index of the smoothed estimate.}
 \item{calc_TDAR}{Logical value (defaulting to 'FALSE') that
 determines whether the time-dependent autoregressive model is
 fitted.}
+
+\item{tau_bandwidth}{Size of the window for rolling Kendall's tau
+calculation.}
 }
 \value{
 A list with elements '"stats"', '"taus"', '"centered"',

@@ -8,8 +8,8 @@ get_boot_pvals(x, block_size = 52, nresamplings = 300,
   parallel = "no", ...)
 }
 \arguments{
-\item{x}{A univariate or multivariate numeric time series object or
-a numeric vector or matrix.}
+\item{x}{A univariate numeric time series object or
+a numeric vector.}
 
 \item{block_size}{The block length used in generating replicate
 time series. 'block_size' should be a postiive integer less tha the
@@ -37,8 +37,8 @@ time series of statistics calculated by \code{get_stats}.
 \details{
 Kendal's tau for the null model are simulated by calculating the
 rolling windows Kendal's tau of rolling window statistics in
-resamplings of the input time series. A fixed length
-block-bootstrap method of resamplings are performed using
+resamplings of the input time series. A fixed-length--block
+bootstrap method of resamplings are performed using
 \code{boot::tsboot}.
 
 Rolling window Kendal's tau are only implemented for some choices
@@ -61,6 +61,17 @@ sdat <- stats::arima.sim(model = list(order = c(2, 0, 0),
 bo <- get_boot_pvals(sdat, nresamplings = 100, stat_bandwidth = 10,
                      backward_only = TRUE, center_trend = "local_constant",
                      center_bandwidth= 10, calc_TDAR = TRUE)
+
+foo <- create_simulator(
+        covar = data.frame(gamma_t = c(0, 0), mu_t = c(0, 0), d_t = c(0, 0),
+        eta_t = c(0, 0), beta_par_t = c(0, 0.00014), p_t = c(0, 0), time = c(0,
+          40)))
+out <- pomp::simulate(foo, times = seq(0, 40, by = 1/26), eta = 1e-3)
+out <- as(out, "data.frame")
+
+
+
+head(out)
 }
 \seealso{
 \code{\link{get_stats}} and \code{\link[boot]{tsboot}}

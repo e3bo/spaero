@@ -58,6 +58,9 @@
 #' @param calc_TDAR Logical value (defaulting to 'FALSE') that
 #'     determines whether the time-dependent autoregressive model is
 #'     fitted.
+#' @param tau_bandwidth Size of the window for rolling Kendall's tau
+#' calculation.
+#'
 #' @return A list with elements '"stats"', '"taus"', '"centered"',
 #'     '"stat_trend"', '"stat_kernel"', '"stat_bandwidth"', and
 #'     '"lag"'. "stats" is a list containing vectors of the
@@ -114,7 +117,7 @@ get_stats <- function(x, center_trend = "grand_mean",
                       stat_trend = c("local_constant", "local_linear"),
                       stat_kernel = c("uniform", "gaussian"),
                       stat_bandwidth = NULL, lag = 1, backward_only = FALSE,
-                      calc_TDAR = FALSE){
+                      calc_TDAR = FALSE, tau_bandwidth = stat_bandwidth * 5){
   center_kernel <- match.arg(center_kernel)
   stat_kernel <- match.arg(stat_kernel)
   stat_trend <- match.arg(stat_trend)
@@ -189,7 +192,7 @@ get_stats <- function(x, center_trend = "grand_mean",
     stop("rolling window Kendall's tau is not implemented for these parameters")
   } else {
     window_tau <- function(ewsts) {
-      zoo::rollapplyr(ewsts, width = stat_bandwidth, FUN = get_tau, partial = TRUE)
+      zoo::rollapplyr(ewsts, width = tau_bandwidth, FUN = get_tau, partial = TRUE)
     }
     taus <- lapply(stats, window_tau)
     inputN <- nrow (centered$x)
