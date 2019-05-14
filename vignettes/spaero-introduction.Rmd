@@ -2,7 +2,7 @@
 title: "Getting Started with spaero"
 author: "Eamon O'Dea"
 date: "`r Sys.Date()`"
-output: rmarkdown::pdf_document
+output: rmarkdown::html_document
 bibliography: ews.bib
 vignette: >
   %\VignetteIndexEntry{Getting Started with spaero}

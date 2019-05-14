@@ -66,8 +66,8 @@ According to that rule, an average block size of about 0.6 years seems appropria
 
 
 ```{r}
-set.seed(1)
-resamp <- boot::tsboot(sub, identity, R = 100, l = 52 * 0.5, sim = "geom")$t
+set.seed(3)
+resamp <- boot::tsboot(sub, identity, R = 300, l = 52 * 0.5, sim = "geom")$t
 plot(ts(t(resamp[1:6,]), frequency = 52))
 ```
 
@@ -114,6 +114,42 @@ stopifnot(isTRUE(all.equal(zapsmall(Re(fft(convolve(Ma2t, Ma2t) / N^2, inverse =
           zapsmall(ma2time^2))))
 
 ```
+
+Let us begin with the mean.
+
+```{r}
+
+N <- dim(resamp)[2]
+
+H <- function(N, cvec){
+  n <- seq(0, N - 1)
+  M <- length(cvec)
+  nfreq <- n / N
+  ret <- complex(N)
+  for (ind in seq_len(M)) {
+      ret <- ret + cvec[ind] * exp(-2i * pi * n[ind] * nfreq)
+  }
+  ret
+}
+
+ma2vec <- rep(1, 2) / 2
+filtwind2 <- H(N, ma2vec)
+
+resampT <- apply(resamp, 1, fft)
+resampMa2T <- resampT * filtwind2
+resampMa2PSD <- Re(rowMeans(resampMa2T * Conj(resampMa2T))) / N ^ 2
+resampMa2acov <- Re(fft(resampMa2PSD, inverse = TRUE))
+
+plot(resampMa2acov[1:30], xlab = "lag", ylab = "autocovariance", ylim = c(0, 15))
+
+resampMa2 <- apply(resampMa2T, 2, function(x) zapsmall(Re(fft(x, inverse = TRUE) / N)))
+tmpf <- function(x) acf(x, type = "covariance", plot = FALSE, demean = FALSE)$acf[,1,1]
+points(rowMeans(apply(resampMa2, 2, tmpf)), pch = 3, col = 2)
+legend("topright", pch = c(1, 3), col = c(1, 2), legend = c("PSD method", "time-domain method"))
+
+```
+
+The autocovariance appears to be signifincant for lags up to 20 in the moving average of 2 observations, a bit longer than was the case for original simulation. 
 
 ## Disclaimer
 
