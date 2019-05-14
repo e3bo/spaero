@@ -14,6 +14,7 @@ vignette: >
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+
 ```
 
 ## Summary of goals
@@ -193,7 +194,76 @@ plot(resampMaAcov[1:155, 150])
 
 Lengthening the window leads to a rapid drop in small-lag autocovariance and a smaller increase in long-range autocovariance. The autocovariance becomes almost triangular for large windows, with a kink in the function occuring at about the length of the window. 
 
-Potentially, we are seeing the autocovariance become dominated by the extend of window overlap for sufficiently large windows. That is, windows large the the timescale of the intrinsic fluctuations in the timeseries.
+Apparently, we are seeing the autocovariance become dominated by the extend of window overlap for sufficiently large windows. That is, it is so dominated when windows are sufficiently larger on the timescale of the intrinsic fluctuations in the timeseries.
+
+Based on this view, two principles for the choice of the window are apparent. First, the window should be several times the time scale of the fluctuations in the time series due to intrinsic noise. Otherwise, the moving window statistics are subject to fluctuations themselved due to the stochastic effect that they are supposed to be characterizing. Second, any correlation analysis of the moving window statistics should occur on a timescale that is several times the length of the window size. Otherwise, trends in the moving window statistics will be dominated by covariance that may be attributed to overlap in windows. 
+
+If the first principle is violated, but not the second, one is likely to estimate low correlations even when the time series is non-stationary. If the second principle is violated, one is likely to estimate large correlations in all cases. We will now provide examples of both of these problems, beginning with the second.
+
+## Large correlations due to window overlap
+
+We have already simulated many stationary time series using the stationary bootstrap. In these simulations, there is no real change in the mean over time. Therefore, correlation analyses that produce large estimates of the trend in the mean are not using a very efficient method. We will see how the window size of the correlation analysis effects the efficieny.
+
+```{r}
+
+
+invT <- function(mat) apply(mat, 2, function(x) zapsmall(Re(fft(x, inverse = TRUE) / N)))
+resampMa <- lapply(resampMaT, invT)
+
+get_tau <- function(x){
+  if (any(is.finite(x))){
+    stats::cor(x = seq_along(x), y = x, method = "kendall",
+               use = "complete.obs")
+  } else {
+    NA
+  }
+}
+
+window_tau <- function(ewsts, w) {
+    suppressWarnings(zoo::rollapplyr(ewsts, width = w, FUN = get_tau, partial = FALSE))
+}
+
+mts_cor <- function(mts, w) apply(mts[, 1:10], 2, FUN = window_tau, w = w)
+
+wseq <- seq(2, 150, 10)
+cors <- Map(mts_cor, resampMa[wseq], w = wseq)
+
+corvecs <- lapply(cors, as.numeric)
+cordfs <- Map(function(x, y) data.frame(tau = x, window = y), corvecs, y = as.list(wseq))
+plotdata <- na.omit(do.call(rbind, cordfs))
+
+library(ggplot2)
+library(ggridges)
+
+g <- ggplot(data = plotdata, aes(x = tau, y = as.factor(window))) + geom_density_ridges() + ylab("Correlation window")
+g
+
+```
+
+
+Even for very large window sizes, conducting a correlation analysis with the same-sized window leads to correlations that are somewhat extreme, when in fact the trend in the mean is known to be zero.
+
+Now let's try a factor of 5 increase in the correlation window relative to the estimate of the mean.
+
+```{r}
+
+wseq5x <- seq(2, 150, 10) * 5
+test <- wseq5x < N
+cors5x <- Map(mts_cor, resampMa[wseq[test]], w = wseq5x[test])
+
+corvecs5x <- lapply(cors5x, as.numeric)
+cordfs5x <- Map(function(x, y) data.frame(tau = x, window = y), corvecs5x, y = as.list(wseq5x[test]))
+plotdata5x <- na.omit(do.call(rbind, cordfs5x))
+
+library(ggplot2)
+library(ggridges)
+
+g5x <- ggplot(data = plotdata5x, aes(x = tau, y = as.factor(window))) + geom_density_ridges() + ylab("Correlation window")
+g5x
+
+```
+
+With a correlation analysis occuring on a larger timescale than the window, the correlations are less extreme, and become concentrated on the known value of zero for larger window sizes.
 
 ## Disclaimer
 
