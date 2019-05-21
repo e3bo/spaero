@@ -311,7 +311,7 @@ test_that(paste("Estimate of stats consistent with other methods",
   times <- seq(0, 200, by = 1 / 12)
 
   sim <- create_simulator(params = params, times = times, covar = covar)
-  so <- pomp::simulate(sim, as.data.frame = TRUE, seed = 272)
+  so <- as(pomp::simulate(sim, seed = 272), "data.frame")
 
   bw <- 720
   n <- nrow(so)
