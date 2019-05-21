@@ -7,12 +7,14 @@ test_that("Argument checking works", {
             expect_error(create_simulator(),
                          regexp = "The pomp package is needed"))
   foo <- create_simulator()
-  params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 1e-4, beta_par = 24e-2,
-              rho = 0.9, S_0 = -1, I_0 = 0, R_0 = 0, N_0 = 1e2, p = 0)
-  expect_error(pomp::simulate(foo, params = params))
-  params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 1e-4, beta_par = 24e-2,
-              rho = -9, S_0 = 1, I_0 = 0, R_0 = 0, N_0 = 1e2, p = 0)
-  expect_error(pomp::simulate(foo, params = params))
+  if (packageVersion("pomp") < "2") {
+    params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 1e-4, beta_par = 24e-2,
+                rho = 0.9, S_0 = -1, I_0 = 0, R_0 = 0, N_0 = 1e2, p = 0)
+    expect_error(pomp::simulate(foo, params = params))
+    params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 1e-4, beta_par = 24e-2,
+                rho = -9, S_0 = 1, I_0 = 0, R_0 = 0, N_0 = 1e2, p = 0)
+    expect_error(pomp::simulate(foo, params = params))
+  }
 })
 
 context("Gillespie direct method simulator")
@@ -47,7 +49,7 @@ test_that("Calculation of cases consistent with number of recovered", {
   sim <- create_simulator(params = params, times = times, covar = covar,
                           process_model = "SIR",
                           transmission = "frequency-dependent")
-  so <- pomp::simulate(sim, as.data.frame = TRUE, seed = 200)
+  so <- as(pomp::simulate(sim, seed = 200), "data.frame")
   expect_equal(diff(so$R), so$cases[-1])
 })
 
@@ -66,7 +68,7 @@ test_that(paste("Mean and stddev of stationary model over time",
 
   sim <- create_simulator(params = params, times = times, covar = covar,
                           process_model = "SIS")
-  so <- pomp::simulate(sim, as.data.frame = TRUE, seed = 200)
+  so <- as(pomp::simulate(sim, seed = 200), "data.frame")
   expect_lt(abs(mean(so[, "I"]) - 0.014375), 0.5)
   expect_lt(abs(mean(so[, "S"]) - 99.9888), 1)
   expect_lt(abs(sd(so[, "I"]) - 0.5130), 0.25)
@@ -88,9 +90,14 @@ test_that(paste("Means and final stddev of time-dependent model",
 
   sim <- create_simulator(params = params, times = times, covar = covar,
                           process_model = "SIS")
-  so <- pomp::simulate(sim, as.data.frame = TRUE, seed = 200, nsim = 1000)
-  ens_infected <- unstack(so, I~sim)
-  ens_susceptible <- unstack(so, S~sim)
+  so <- as(pomp::simulate(sim, seed = 200, nsim = 1000), "data.frame")
+  if (packageVersion("pomp") < 2) {
+    ens_infected <- unstack(so, I~sim)
+    ens_susceptible <- unstack(so, S~sim)
+  } else {
+    ens_infected <- unstack(so, I~.id)
+    ens_susceptible <- unstack(so, S~.id)
+  }
   dzout <- read.csv(file.path("dizzy", "out-linear-trend.csv"), nrows = 100)
   expect_lt(sqrt(mean( (dzout$I - rowMeans(ens_infected)) ^ 2)), 1)
   expect_lt(sqrt(mean( (dzout$S - rowMeans(ens_susceptible)) ^ 2)), 1)
@@ -119,9 +126,14 @@ test_that(paste("Means and final stddev of time-dependent model",
   covar <- as.data.frame(covar)
   sim <- create_simulator(params = params, times = times, covar = covar,
                           process_model = "SIS")
-  so <- pomp::simulate(sim, as.data.frame = TRUE, seed = 200, nsim = 100)
-  ens_infected <- unstack(so, I~sim)
-  ens_susceptible <- unstack(so, S~sim)
+  so <- as(pomp::simulate(sim, seed = 200, nsim = 100), "data.frame")
+  if (packageVersion("pomp") < "2"){
+    ens_infected <- unstack(so, I~sim)
+    ens_susceptible <- unstack(so, S~sim)
+  } else {
+    ens_infected <- unstack(so, I~.id)
+    ens_susceptible <- unstack(so, S~.id)
+  }
   dzout <- read.csv(file.path("dizzy", "out-multiple-moving-parameters.csv"),
                     nrows = 100)
   expect_lt(sqrt(mean( (dzout$I - rowMeans(ens_infected)) ^ 2)), 3)
@@ -147,7 +159,7 @@ test_that(paste("Fluctuations for large system sizes approximate AR process",
               R_0 = 0.833216, N_0 = 1e6, p = 0)
   times <- seq(0, 1000, len = 1000)
   sim <- create_simulator(params = params, times = times, process_model = "SIR")
-  so <- pomp::simulate(sim, as.data.frame = TRUE, seed = 202)
+  so <- as(pomp::simulate(sim, seed = 202), "data.frame")
   sts <- so[, c("I", "S")]
   sim_sigma <- cov(sts)
   expect_equal(sim_sigma["I", "I"], 0.1095306 * params["N_0"],
@@ -203,6 +215,6 @@ test_that(paste("Susceptible population dynamics match deterministic",
                       time = c(0, tzero, max(c(tzero, times))))
   create_simulator(times = times, t0 = 0, transmission = "frequency-dependent",
                    params = params, covar = covar) -> sim
-  out <- pomp::simulate(sim, as.data.frame = TRUE)
+  out <- as(pomp::simulate(sim), "data.frame")
   expect_equal(out$S , sol(times) * params["N_0"], tol = 0.01)
 })
