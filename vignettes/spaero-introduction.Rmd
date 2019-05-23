@@ -122,7 +122,11 @@ rates cannot be set at simulation time.
 
 One can also set the number of replicates.
 ```{r}
-as(pomp::simulate(sim, nsim=2, times=seq(1, 2)), "data.frame")
+if (utils::packageVersion("pomp") < "2.0.0") {
+  pomp::simulate(sim, nsim=2, times=seq(1, 2), as.data.frame = TRUE)
+} else {
+  pomp::simulate(sim, nsim=2, times=seq(1, 2), format = "data.frame")
+}
 ```
 
 The random number seed allows simulations to be reproduced.

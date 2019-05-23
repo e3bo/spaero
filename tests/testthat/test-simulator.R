@@ -90,11 +90,12 @@ test_that(paste("Means and final stddev of time-dependent model",
 
   sim <- create_simulator(params = params, times = times, covar = covar,
                           process_model = "SIS")
-  so <- as(pomp::simulate(sim, seed = 200, nsim = 1000), "data.frame")
   if (utils::packageVersion("pomp") < "2.0.0") {
+    so <- pomp::simulate(sim, seed = 200, nsim = 1000, as.data.frame = TRUE)
     ens_infected <- unstack(so, I~sim)
     ens_susceptible <- unstack(so, S~sim)
   } else {
+    so <- pomp::simulate(sim, seed = 200, nsim = 1000, format = "data.frame")
     ens_infected <- unstack(so, I~.id)
     ens_susceptible <- unstack(so, S~.id)
   }
@@ -126,11 +127,12 @@ test_that(paste("Means and final stddev of time-dependent model",
   covar <- as.data.frame(covar)
   sim <- create_simulator(params = params, times = times, covar = covar,
                           process_model = "SIS")
-  so <- as(pomp::simulate(sim, seed = 200, nsim = 100), "data.frame")
   if (utils::packageVersion("pomp") < "2.0.0"){
+    so <- pomp::simulate(sim, seed = 200, nsim = 100, as.data.frame = TRUE)
     ens_infected <- unstack(so, I~sim)
     ens_susceptible <- unstack(so, S~sim)
   } else {
+    so <- pomp::simulate(sim, seed = 200, nsim = 100, format = "data.frame")
     ens_infected <- unstack(so, I~.id)
     ens_susceptible <- unstack(so, S~.id)
   }
