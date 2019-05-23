@@ -37,7 +37,7 @@
   correlation coefficient of the elements of each time series in the
   stats list in the output with time.
 
-- Ensure variance and kurtosis esimates are non-negative. When using
+- Ensure variance and kurtosis estimates are non-negative. When using
   local linear for estimating statistics, it was possible in previous
   versions for negative values to occur.
 
