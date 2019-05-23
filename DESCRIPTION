@@ -1,6 +1,6 @@
 Package: spaero
 Title: Software for Project AERO
-Version: 0.5.0.9000
+Version: 0.5.0
 Authors@R: person("Eamon", "O'Dea", email = "odea35@gmail.com",
     role = c("aut", "cre"))
 Description: Implements methods for anticipating the emergence and eradication
