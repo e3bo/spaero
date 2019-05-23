@@ -79,7 +79,7 @@ create_simulator <- function(times = seq(0, 9), t0 = min(times),
       template <- freqdep_sis_template
     }
   }
-  if (packageVersion("pomp") >= "2.0.0") {
+  if (utils::packageVersion("pomp") >= "2.0.0") {
     rprocess <- do.call(pomp::gillespie_hl, template)
     covartab <- pomp::covariate_table(covar, times = "time")
     rinit <- paste("double m = N_0/(S_0 + I_0 + R_0); S = nearbyint(m*S_0);",
