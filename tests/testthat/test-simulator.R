@@ -7,7 +7,7 @@ test_that("Argument checking works", {
             expect_error(create_simulator(),
                          regexp = "The pomp package is needed"))
   foo <- create_simulator()
-  if (packageVersion("pomp") < "2") {
+  if (utils::packageVersion("pomp") < "2.0.0") {
     params <- c(gamma = 24, mu = 0.014, d = 0.014, eta = 1e-4, beta_par = 24e-2,
                 rho = 0.9, S_0 = -1, I_0 = 0, R_0 = 0, N_0 = 1e2, p = 0)
     expect_error(pomp::simulate(foo, params = params))
@@ -91,7 +91,7 @@ test_that(paste("Means and final stddev of time-dependent model",
   sim <- create_simulator(params = params, times = times, covar = covar,
                           process_model = "SIS")
   so <- as(pomp::simulate(sim, seed = 200, nsim = 1000), "data.frame")
-  if (packageVersion("pomp") < 2) {
+  if (utils::packageVersion("pomp") < "2.0.0") {
     ens_infected <- unstack(so, I~sim)
     ens_susceptible <- unstack(so, S~sim)
   } else {
@@ -127,7 +127,7 @@ test_that(paste("Means and final stddev of time-dependent model",
   sim <- create_simulator(params = params, times = times, covar = covar,
                           process_model = "SIS")
   so <- as(pomp::simulate(sim, seed = 200, nsim = 100), "data.frame")
-  if (packageVersion("pomp") < "2"){
+  if (utils::packageVersion("pomp") < "2.0.0"){
     ens_infected <- unstack(so, I~sim)
     ens_susceptible <- unstack(so, S~sim)
   } else {
