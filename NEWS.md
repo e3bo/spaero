@@ -1,3 +1,7 @@
+# spaero 0.5.0
+
+- Add support for pomp version 2.
+
 # spaero 0.4.0
 
 - Change name of "beta" in the parameters of the simulators to
