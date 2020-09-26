@@ -79,47 +79,19 @@ create_simulator <- function(times = seq(0, 9), t0 = min(times),
       template <- freqdep_sis_template
     }
   }
-  if (utils::packageVersion("pomp") >= "2.0.0") {
-    rprocess <- do.call(pomp::gillespie_hl, template)
-    covartab <- pomp::covariate_table(covar, times = "time")
-    rinit <- paste("double m = N_0/(S_0 + I_0 + R_0); S = nearbyint(m*S_0);",
-                   "I = nearbyint(m*I_0); R = nearbyint(m*R_0); N = N_0;",
-                   "cases = 0;")
-    rmeas <- "reports = rbinom(cases, rho);"
-    pomp::simulate(times = times, t0 = t0, params = params,
-                   paramnames = names(params), rprocess = rprocess,
-                   rmeasure = pomp::Csnippet(rmeas),
-                   rinit = pomp::Csnippet(rinit), covar = covartab,
-                   statenames = c("S", "I", "R", "N", "cases"),
-                   accumvars = "cases", obsnames = "reports")
-  } else {
-    data <- data.frame(time = times, reports = NA)
-    rprocess <- do.call(pomp::gillespie.hl.sim, template)
-    initializer <- function(params, t0, ...) {
-      comp.names <- c("S", "I", "R")
-      ic.names <- c("S_0", "I_0", "R_0")
-      x0 <- stats::setNames(numeric(5), c("S", "I", "R", "N", "cases"))
-      fracs <- params[ic.names]
-      x0["N"] <- params["N_0"]
-      x0[comp.names] <- round(params["N_0"] * fracs / sum(fracs))
-      if (params["rho"] < 0 | params["rho"] > 1) {
-        stop("rho must be in [0, 1]", call. = FALSE)
-      }
-      pos.names <- c("S_0", "I_0", "R_0", "N_0")
-      if (any(params[pos.names] < 0)) {
-        stop(paste("All", paste(pos.names, collapse = " "), "should be >= 0."),
-             call. = FALSE)
-      }
-      x0
-    }
-    pomp::pomp(data = data, times = "time", t0 = t0, params = params,
-               paramnames = names(params), rprocess = rprocess,
-               measurement.model = reports~binom(size = cases, prob = rho),
-               covar = covar, statenames = c("S", "I", "R", "N", "cases"),
-               covarnames =
-                 c("gamma_t", "mu_t", "d_t", "eta_t", "beta_par_t", "p_t"),
-               tcovar = "time", zeronames = "cases", initializer = initializer)
-  }
+
+  rprocess <- do.call(pomp::gillespie_hl, template)
+  covartab <- pomp::covariate_table(covar, times = "time")
+  rinit <- paste("double m = N_0/(S_0 + I_0 + R_0); S = nearbyint(m*S_0);",
+                 "I = nearbyint(m*I_0); R = nearbyint(m*R_0); N = N_0;",
+                 "cases = 0;")
+  rmeas <- "reports = rbinom(cases, rho);"
+  pomp::simulate(times = times, t0 = t0, params = params,
+                 paramnames = names(params), rprocess = rprocess,
+                 rmeasure = pomp::Csnippet(rmeas),
+                 rinit = pomp::Csnippet(rinit), covar = covartab,
+                 statenames = c("S", "I", "R", "N", "cases"),
+                 accumvars = "cases", obsnames = "reports")
 }
 
 
