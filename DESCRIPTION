@@ -17,6 +17,7 @@ Suggests:
     covr (>= 3.0.0),
     earlywarnings (>= 1.0.59),
     knitr (>= 1.11),
+    moments (>= 0.14),
     np (>= 0.60.2),
     pomp (>= 2.1),
     rmarkdown (>= 0.9.2),
