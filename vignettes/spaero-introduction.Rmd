@@ -80,9 +80,21 @@ capabilities of the pomp package. The user calls the
 \texttt{create\_simulator} function to create an object of class \texttt{pomp}. This
 object contains the model structure as well as default parameters for
 the simulation. Simulations of the model may then be run using the
-\texttt{simulate} method in the pomp package:
+\texttt{simulate} method in the pomp package. (To reproduce the output of the code chunks in this document, then, the pomp package must be installed.)
+```{r, echo = FALSE}
+ if (requireNamespace("pomp", quietly = TRUE)) {
+knitr::opts_chunk$set(
+  eval = TRUE
+)
+ } else {
+knitr::opts_chunk$set(
+  eval = FALSE
+)
+} 
+```
 ```{r}
 library(spaero)
+
 sim <- create_simulator()
 simout <- pomp::simulate(sim)
 ```

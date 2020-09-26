@@ -61,15 +61,17 @@ for the course of the simulation.
 }
 \examples{
 
-foo <- create_simulator()
-out <- pomp::simulate(foo, times = seq(0, 20, by = 1/26))
-out <- as(out, "data.frame")
-head(out)
+if (requireNamespace("pomp", quietly = TRUE)) {
+  foo <- create_simulator()
+  out <- pomp::simulate(foo, times = seq(0, 20, by = 1/26))
+  out <- as(out, "data.frame")
+  head(out)
 
-opar <- par(mfrow = c(2, 1))
-plot((S/N)~time, data = out, type = "l")
-plot(cases~time, data = out, type = "l")
-par(opar)
+  opar <- par(mfrow = c(2, 1))
+  plot((S/N)~time, data = out, type = "l")
+  plot(cases~time, data = out, type = "l")
+  par(opar)
+}
 
 }
 \seealso{

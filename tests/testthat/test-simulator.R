@@ -20,6 +20,7 @@ test_that("Argument checking works", {
 context("Gillespie direct method simulator")
 
 test_that("SIS simulation equilibrium approximates mathematical equilibrium", {
+  skip_if_not_installed("pomp")
 
   params <- c(gamma = 24, mu = 0.0, d = 0.0, eta = 0, beta_par = 48,
               rho = 0.9, S_0 = 1, I_0 = .1, R_0 = 0, N_0 = 1e3, p = 0)
