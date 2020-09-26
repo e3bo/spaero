@@ -46,8 +46,7 @@ Feature requests are also welcome but be forewarned that we have
 limited time to work on items not directly supporting the project's
 research.
 
-More details about contribution may be found in the
-[contribution guidelines](CONTRIBUTING.md).
+More details about contribution may be found in the file CONTRIBUTING.md.
 
 ## License
 
