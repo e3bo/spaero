@@ -1,6 +1,6 @@
 Package: spaero
 Title: Software for Project AERO
-Version: 0.5.0
+Version: 0.6.0
 Authors@R: person("Eamon", "O'Dea", email = "odea35@gmail.com",
     role = c("aut", "cre"))
 Description: Implements methods for anticipating the emergence and eradication
@@ -18,10 +18,10 @@ Suggests:
     earlywarnings (>= 1.0.59),
     knitr (>= 1.11),
     np (>= 0.60.2),
-    pomp (>= 1.19),
+    pomp (>= 2.1),
     rmarkdown (>= 0.9.2),
     testthat (>= 0.11.0)
 BugReports: https://github.com/e3bo/spaero/issues/
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1
 VignetteBuilder: knitr
 Encoding: UTF-8

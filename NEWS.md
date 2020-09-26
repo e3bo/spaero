@@ -1,3 +1,8 @@
+# spaero 0.6.0
+
+- Remove support for pomp version 1. This change is the simplest way to 
+  avoid problems with CRAN checks.
+
 # spaero 0.5.0
 
 - Add support for pomp version 2.
