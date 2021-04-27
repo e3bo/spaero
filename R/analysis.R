@@ -118,6 +118,24 @@ get_stats <- function(x, center_trend = "grand_mean",
                       bandwidth = center_bandwidth,
                       backward_only = backward_only)
   stats <- list()
+  
+  f1 <- function(n) return(rep(1, length.out = n))
+  f2 <- function(n) return(seq(from = -n / 2 + 0.5, to = n / 2 - 0.5))
+  stats$ar_values <- vector()
+  for (i in 3:length(x)) {
+    current_data <- x[1:i]
+    new_calculation <- tryCatch({
+      M <- get_TDAR_M(y = current_data, f1, f2)
+      theta <- get_TDAR_theta(M = M, x = current_data[-1])
+      get_TDAR_values(y = current_data, theta = theta, f1, f2)
+    }, error = function(e) {
+      replace <- 5
+    }
+    )
+    # new_calculation <- custom_fitTDAR(y = current_data, f1, f2)
+    stats$ar_values[i] <- new_calculation[i]
+  }
+  
   stats$variance <- get_noncentral_moments(centered$x, moment_number = 2,
                                            est = stat_trend,
                                            kernel = stat_kernel,
@@ -132,12 +150,12 @@ get_stats <- function(x, center_trend = "grand_mean",
                                   backward_only = backward_only)
   stats$autocovariance <- stats$autocovariance$smooth
   if (lag > 0) {
-      denom <- stats$variance[-seq_len(lag)]
-      desel <- seq(length(stats$variance) - lag + 1, length(stats$variance))
-      denom <- sqrt(denom * stats$variance[-desel])
-      denom <- c(rep(NA, lag), denom)
+    denom <- stats$variance[-seq_len(lag)]
+    desel <- seq(length(stats$variance) - lag + 1, length(stats$variance))
+    denom <- sqrt(denom * stats$variance[-desel])
+    denom <- c(rep(NA, lag), denom)
   } else {
-      denom <- stats$variance
+    denom <- stats$variance
   }
   stats$autocorrelation <- stats$autocovariance / denom
   ac01 <- ifelse(0 > stats$autocorrelation, 0, stats$autocorrelation)
@@ -160,12 +178,37 @@ get_stats <- function(x, center_trend = "grand_mean",
                                            backward_only = backward_only)
   stats$kurtosis <- stats$kurtosis$smooth / stats$variance ^ 2
   stats$kurtosis[stats$kurtosis < 0] <- 0
-
-  taus <- lapply(stats, get_tau)
+  
+  # taus <- lapply(stats, get_tau)
+  taus <- lapply(stats, ktseq)
   ret <- list(stats = stats, taus = taus, centered = centered,
               stat_trend = stat_trend, stat_kernel = stat_kernel,
               stat_bandwidth = stat_bandwidth, lag = lag)
   ret
+}
+
+ktseq <- function(ts) {
+  r <- rank(ts, ties.method = "min")
+  n <- length(ts)
+  ndisc <- numeric(n)
+  npairsi <- cumsum(c(0, seq_len(n - 1)))
+  isdup <- duplicated(r)
+  udup <- unique(r[isdup])
+  duptally <- integer(length(udup))
+  names(duptally) <- as.character(udup)
+  n1 <- numeric(n)
+  for(i in seq_len(n)){
+    ndisc[i] <- sum(r[seq_len(i - 1)] > r[i])
+    if (isdup[i]) {
+      cri <- as.character(r[i])
+      duptally[cri] <- duptally[cri] + 1
+      n1[i] <- n1[i-1] + duptally[cri]
+    } else if (i > 1) {
+      n1[i] <- n1[i - 1]
+    }
+  }
+  ndisci <- cumsum(ndisc)
+  (npairsi - 2 * ndisci - n1) / sqrt(npairsi * (npairsi - n1))
 }
 
 get_tau <- function(x){
@@ -179,7 +222,7 @@ get_tau <- function(x){
 
 detrend <- function(x, trend = c("grand_mean", "ensemble_means",
                                  "local_constant", "local_linear",
-                               "assume_zero"), bandwidth = NULL, ...){
+                                 "assume_zero"), bandwidth = NULL, ...){
   trend <- match.arg(trend)
   x <- stats::na.fail(x)
   x <- as.matrix(x)
@@ -207,12 +250,12 @@ detrend <- function(x, trend = c("grand_mean", "ensemble_means",
 }
 
 get_wls_coefs <- function(y, x, w){
-    swx <- sum(w * x)
-    swy <- sum(w * y)
-    sw <- sum(w)
-    b <- (sum(w * x * y) - swx * swy / sw) / (sum(w * x ^ 2) - swx ^ 2 / sw )
-    a <- (sum(w * y) - b * sum(w * x)) / sw
-    c(intercept = a, slope = b)
+  swx <- sum(w * x)
+  swy <- sum(w * y)
+  sw <- sum(w)
+  b <- (sum(w * x * y) - swx * swy / sw) / (sum(w * x ^ 2) - swx ^ 2 / sw )
+  a <- (sum(w * y) - b * sum(w * x)) / sw
+  c(intercept = a, slope = b)
 }
 
 smooth <- function(data, est, kernel = "gaussian", bandwidth,
@@ -232,9 +275,9 @@ smooth <- function(data, est, kernel = "gaussian", bandwidth,
     kern <- function(ind, bw = bandwidth){
       dist <- (data$step - ind) / bw
       if (backward_only) {
-          w <- dist <= 0 & dist > -1
+        w <- dist <= 0 & dist > -1
       } else {
-          w <- dist < 1 & dist > -1
+        w <- dist < 1 & dist > -1
       }
       w / sum(w)
     }
@@ -259,14 +302,14 @@ autocor <- function(x, cortype = c("correlation", "covariance"), lag = 1, ...){
   x <- as.matrix(x)
   if (!is.numeric(x)) stop("'x' must be numeric")
   if (lag < 0) stop("'lag' must be >= 0")
-
+  
   n <- nrow(x)
   end1 <- n - lag
   start2 <- 1 + lag
   x1 <- x[1:end1, , drop = FALSE]
   x2 <- x[start2:n, , drop = FALSE]
   xx_lag <- rowMeans(x1 * x2)
-
+  
   step <- seq(start2, n)
   data <- data.frame(step = step, rmn = xx_lag)
   xx_lag_sm <- smooth(data = data, ...)
@@ -290,9 +333,43 @@ get_noncentral_moments <- function(x, moment_number = 3, ...) {
   x <- as.matrix(x)
   if (!is.numeric(x)) stop("'x' must be numeric")
   if (moment_number < 1) stop("'moment_number' must be >= 1")
-
+  
   xpow <- rowMeans(x ^ moment_number)
   step <- seq_along(xpow)
   data <- data.frame(step = step, rmn = xpow)
   smooth(data = data, ...)
+}
+
+get_TDAR_M <- function(y, ...) {
+  ## use Eq. 12 in BMC Bioinformatics 2008, 9(Suppl 9):S14
+  basis_functions <- list(...)
+  
+  # Get M
+  N <- length(y)
+  F <- matrix(nrow = N, ncol = length(basis_functions))
+  for (i in 1:length(basis_functions)) {
+    F[ , i] <- basis_functions[[i]](N)
+  }
+  U <- as.numeric(y) * F
+  Phi <- U[-N, ]
+  x <- y[-1]
+  M <- solve(t(Phi) %*% Phi) %*% t(Phi)
+  return(M)
+}
+
+get_TDAR_theta <- function(M, x) {
+  theta <- M %*% x
+  return(theta)
+}
+
+get_TDAR_values <- function(y, theta, ...) {
+  basis_functions <- list(...)
+  N <- length(y)
+  bf_matrix <- matrix(nrow = N, ncol = length(basis_functions))
+  for (i in 1:length(basis_functions)) {
+    bf_matrix[ , i] <- basis_functions[[i]](N)*as.numeric(theta[i])
+  }
+  ar_values <- rowSums(x = bf_matrix)
+  
+  return(ar_values)
 }
